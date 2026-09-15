@@ -17,6 +17,17 @@ import {
 
 const MAX_DECIMALS = 18;
 const SLIPPAGE_BPS = 50;
+const ETH_GAS_RESERVE = 0.001;
+
+function friendlyTransactionError(error: unknown) {
+  const message = error instanceof Error ? error.message.toLowerCase() : '';
+  if (message.includes('user rejected') || message.includes('user denied') || message.includes('rejected the request')) return 'TRANSACTION REJECTED IN WALLET';
+  if (message.includes('insufficient funds')) return 'INSUFFICIENT ETH FOR GAS';
+  if (message.includes('insufficient balance') || message.includes('transfer amount exceeds balance')) return 'INSUFFICIENT TOKEN BALANCE';
+  if (message.includes('execution reverted') || message.includes('reverted')) return 'SWAP REVERTED. PRICE OR ROUTE MAY HAVE CHANGED';
+  if (message.includes('chain')) return 'NETWORK ERROR. CHECK ROBINHOOD CHAIN';
+  return 'TRANSACTION FAILED. CHECK YOUR WALLET AND TRY AGAIN';
+}
 
 export function SwapPanel() {
   const { address, chainId, isConnected } = useAccount();
@@ -45,7 +56,7 @@ export function SwapPanel() {
   const setMax = () => {
     if (!fromBalance) return;
     const value = Number(fromBalance.formatted);
-    const reserve = fromSymbol === 'ETH' ? 0.001 : 0;
+    const reserve = fromSymbol === 'ETH' ? ETH_GAS_RESERVE : 0;
     setAmount(Number.isFinite(value) ? Math.max(value - reserve, 0).toFixed(6) : '');
   };
 
@@ -60,18 +71,21 @@ export function SwapPanel() {
     let cancelled = false;
     const loadQuote = async () => {
       setQuote(null);
-      setStatus('');
       if (!amount || !isConnected || chainId !== ROBINHOOD_CHAIN_ID || !publicClient) return;
       try {
-        setQuoting(true);
         const amountIn = parseSwapAmount(amount, fromSymbol);
+        if (fromBalance && amountIn > fromBalance.value) {
+          setStatus(`INSUFFICIENT ${fromSymbol} BALANCE`);
+          return;
+        }
+        if (fromSymbol === 'USDC' && nativeBalance && nativeBalance.value < parseSwapAmount('0.00005', 'ETH')) {
+          setStatus('LOW ETH BALANCE FOR GAS');
+          return;
+        }
+        setQuoting(true);
+        setStatus('');
         const path = flipped ? [USDC_ROBINHOOD, WETH_ROBINHOOD] : [WETH_ROBINHOOD, USDC_ROBINHOOD];
-        const amounts = await publicClient.readContract({
-          address: UNISWAP_V2_ROUTER_ROBINHOOD,
-          abi: routerAbi,
-          functionName: 'getAmountsOut',
-          args: [amountIn, path],
-        });
+        const amounts = await publicClient.readContract({ address: UNISWAP_V2_ROUTER_ROBINHOOD, abi: routerAbi, functionName: 'getAmountsOut', args: [amountIn, path] });
         if (!cancelled) setQuote(amounts[amounts.length - 1]);
       } catch {
         if (!cancelled) setStatus('NO ROUTE AVAILABLE FOR THIS SIZE');
@@ -80,20 +94,29 @@ export function SwapPanel() {
       }
     };
     void loadQuote();
-    return () => { cancelled = true; };
-  }, [amount, chainId, flipped, fromSymbol, isConnected, publicClient]);
+    const refresh = window.setInterval(() => { void loadQuote(); }, 10_000);
+    return () => { cancelled = true; window.clearInterval(refresh); };
+  }, [amount, chainId, flipped, fromBalance?.value, fromSymbol, isConnected, nativeBalance?.value, publicClient]);
 
   const executeSwap = async () => {
-    if (!address || !walletClient || !publicClient || !amount || !quote) return;
+    if (!address || !walletClient || !publicClient || !amount || !quote || !fromBalance) return;
     if (chainId !== ROBINHOOD_CHAIN_ID) {
       switchChain({ chainId: ROBINHOOD_CHAIN_ID });
       return;
     }
 
     try {
+      const amountIn = parseSwapAmount(amount, fromSymbol);
+      if (amountIn > fromBalance.value) {
+        setStatus(`INSUFFICIENT ${fromSymbol} BALANCE`);
+        return;
+      }
+      if (fromSymbol === 'USDC' && nativeBalance && nativeBalance.value < parseSwapAmount('0.00005', 'ETH')) {
+        setStatus('INSUFFICIENT ETH FOR GAS');
+        return;
+      }
       setBusy(true);
       setStatus('PREPARING TRANSACTION...');
-      const amountIn = parseSwapAmount(amount, fromSymbol);
       const minOut = minimumOutput(quote, SLIPPAGE_BPS);
       const path = flipped ? [USDC_ROBINHOOD, WETH_ROBINHOOD] as const : [WETH_ROBINHOOD, USDC_ROBINHOOD] as const;
       const deadline = BigInt(Math.floor(Date.now() / 1000) + 900);
@@ -119,8 +142,7 @@ export function SwapPanel() {
       setAmount('');
       setQuote(null);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Transaction rejected or failed';
-      setStatus(message.length > 72 ? `${message.slice(0, 69)}...` : message);
+      setStatus(friendlyTransactionError(error));
     } finally {
       setBusy(false);
     }
@@ -152,7 +174,7 @@ export function SwapPanel() {
       ) : (
         <button className="swap-submit" type="button" onClick={executeSwap} disabled={!amount || !quote || busy || quoting}>{busy ? <LoaderCircle size={13} className="spin" /> : <Wallet size={13} />}{busy ? 'PROCESSING...' : quote ? `SWAP ${fromSymbol} FOR ${toSymbol}` : 'ENTER AMOUNT'}</button>
       )}
-      <div style={{ marginTop: 10, color: status.includes('CONFIRMED') ? '#9ff6c4' : '#4f5966', font: '8px DM Mono, monospace', lineHeight: 1.7, textAlign: 'center', minHeight: 13 }}>{status || '0.50% slippage protection. Transactions execute on Robinhood Chain.'}</div>
+      <div style={{ marginTop: 10, color: status.includes('CONFIRMED') ? '#9ff6c4' : '#4f5966', font: '8px DM Mono, monospace', lineHeight: 1.7, textAlign: 'center', minHeight: 13 }}>{status || '0.50% slippage protection. Quotes refresh every 10 seconds.'}</div>
     </div>
   );
 }

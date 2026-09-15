@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import { ArrowUpRight, Activity, ChevronDown, Radio, ShieldCheck } from 'lucide-react';
 import { BlackHoleHeroSection } from '@/components/ui/blackhole-hero-section';

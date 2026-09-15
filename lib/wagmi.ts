@@ -17,9 +17,11 @@ import {
 } from '@rainbow-me/rainbowkit/wallets';
 import { arbitrum, base, mainnet } from 'wagmi/chains';
 
+const walletConnectProjectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? 'KYOX_BUILD_PLACEHOLDER';
+
 export const wagmiConfig = getDefaultConfig({
   appName: 'KYOX',
-  projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? '',
+  projectId: walletConnectProjectId,
   chains: [arbitrum, base, mainnet],
   wallets: [
     {

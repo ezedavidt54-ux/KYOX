@@ -5,10 +5,10 @@ import { ArrowDownUp, ChevronDown, LoaderCircle, Wallet } from 'lucide-react';
 import { useAccount, useBalance, usePublicClient, useSwitchChain, useWalletClient } from 'wagmi';
 import { formatUnits } from 'viem';
 import {
-  ARBITRUM_CHAIN_ID,
-  USDC_ARBITRUM,
-  UNISWAP_V2_ROUTER_ARBITRUM,
-  WETH_ARBITRUM,
+  ROBINHOOD_CHAIN_ID,
+  USDC_ROBINHOOD,
+  UNISWAP_SWAP_ROUTER_ROBINHOOD,
+  WETH_ROBINHOOD,
   erc20Abi,
   minimumOutput,
   parseSwapAmount,
@@ -21,10 +21,10 @@ const SLIPPAGE_BPS = 50;
 export function SwapPanel() {
   const { address, chainId, isConnected } = useAccount();
   const { data: walletClient } = useWalletClient();
-  const publicClient = usePublicClient({ chainId: ARBITRUM_CHAIN_ID });
+  const publicClient = usePublicClient({ chainId: ROBINHOOD_CHAIN_ID });
   const { switchChain, isPending: switching } = useSwitchChain();
-  const { data: nativeBalance, isLoading: nativeLoading } = useBalance({ address });
-  const { data: usdcBalance, isLoading: usdcLoading } = useBalance({ address, token: USDC_ARBITRUM });
+  const { data: nativeBalance, isLoading: nativeLoading } = useBalance({ address, chainId: ROBINHOOD_CHAIN_ID });
+  const { data: usdcBalance, isLoading: usdcLoading } = useBalance({ address, chainId: ROBINHOOD_CHAIN_ID, token: USDC_ROBINHOOD });
   const [amount, setAmount] = useState('');
   const [flipped, setFlipped] = useState(false);
   const [quote, setQuote] = useState<bigint | null>(null);
@@ -61,13 +61,13 @@ export function SwapPanel() {
     const loadQuote = async () => {
       setQuote(null);
       setStatus('');
-      if (!amount || !isConnected || chainId !== ARBITRUM_CHAIN_ID || !publicClient) return;
+      if (!amount || !isConnected || chainId !== ROBINHOOD_CHAIN_ID || !publicClient) return;
       try {
         setQuoting(true);
         const amountIn = parseSwapAmount(amount, fromSymbol);
-        const path = flipped ? [USDC_ARBITRUM, WETH_ARBITRUM] : [WETH_ARBITRUM, USDC_ARBITRUM];
+        const path = flipped ? [USDC_ROBINHOOD, WETH_ROBINHOOD] : [WETH_ROBINHOOD, USDC_ROBINHOOD];
         const amounts = await publicClient.readContract({
-          address: UNISWAP_V2_ROUTER_ARBITRUM,
+          address: UNISWAP_SWAP_ROUTER_ROBINHOOD,
           abi: routerAbi,
           functionName: 'getAmountsOut',
           args: [amountIn, path],
@@ -85,8 +85,8 @@ export function SwapPanel() {
 
   const executeSwap = async () => {
     if (!address || !walletClient || !publicClient || !amount || !quote) return;
-    if (chainId !== ARBITRUM_CHAIN_ID) {
-      switchChain({ chainId: ARBITRUM_CHAIN_ID });
+    if (chainId !== ROBINHOOD_CHAIN_ID) {
+      switchChain({ chainId: ROBINHOOD_CHAIN_ID });
       return;
     }
 
@@ -95,23 +95,23 @@ export function SwapPanel() {
       setStatus('PREPARING TRANSACTION...');
       const amountIn = parseSwapAmount(amount, fromSymbol);
       const minOut = minimumOutput(quote, SLIPPAGE_BPS);
-      const path = flipped ? [USDC_ARBITRUM, WETH_ARBITRUM] as const : [WETH_ARBITRUM, USDC_ARBITRUM] as const;
+      const path = flipped ? [USDC_ROBINHOOD, WETH_ROBINHOOD] as const : [WETH_ROBINHOOD, USDC_ROBINHOOD] as const;
       const deadline = BigInt(Math.floor(Date.now() / 1000) + 900);
 
       if (flipped) {
         const allowance = await publicClient.readContract({
-          address: USDC_ARBITRUM,
+          address: USDC_ROBINHOOD,
           abi: erc20Abi,
           functionName: 'allowance',
-          args: [address, UNISWAP_V2_ROUTER_ARBITRUM],
+          args: [address, UNISWAP_SWAP_ROUTER_ROBINHOOD],
         });
         if (allowance < amountIn) {
           setStatus('APPROVE USDC IN YOUR WALLET...');
           const approvalHash = await walletClient.writeContract({
-            address: USDC_ARBITRUM,
+            address: USDC_ROBINHOOD,
             abi: erc20Abi,
             functionName: 'approve',
-            args: [UNISWAP_V2_ROUTER_ARBITRUM, amountIn],
+            args: [UNISWAP_SWAP_ROUTER_ROBINHOOD, amountIn],
             chain: walletClient.chain,
             account: address,
           });
@@ -119,7 +119,7 @@ export function SwapPanel() {
         }
         setStatus('CONFIRM SWAP IN YOUR WALLET...');
         const hash = await walletClient.writeContract({
-          address: UNISWAP_V2_ROUTER_ARBITRUM,
+          address: UNISWAP_SWAP_ROUTER_ROBINHOOD,
           abi: routerAbi,
           functionName: 'swapExactTokensForETH',
           args: [amountIn, minOut, path, address, deadline],
@@ -131,7 +131,7 @@ export function SwapPanel() {
       } else {
         setStatus('CONFIRM SWAP IN YOUR WALLET...');
         const hash = await walletClient.writeContract({
-          address: UNISWAP_V2_ROUTER_ARBITRUM,
+          address: UNISWAP_SWAP_ROUTER_ROBINHOOD,
           abi: routerAbi,
           functionName: 'swapExactETHForTokens',
           args: [minOut, path, address, deadline],
@@ -142,7 +142,7 @@ export function SwapPanel() {
         setStatus('SWAP SUBMITTED. WAITING FOR CONFIRMATION...');
         await publicClient.waitForTransactionReceipt({ hash });
       }
-      setStatus('SWAP CONFIRMED ON ARBITRUM');
+      setStatus('SWAP CONFIRMED ON ROBINHOOD CHAIN');
       setAmount('');
       setQuote(null);
     } catch (error) {
@@ -154,14 +154,14 @@ export function SwapPanel() {
   };
 
   const receiveLabel = quote
-    ? formatUnits(quote, flipped ? 18 : 6)
+    ? formatUnits(quote, 18)
     : amount && quoting ? 'FETCHING QUOTE...' : amount ? 'NO QUOTE' : '0.00';
 
   const requestWallet = () => window.dispatchEvent(new Event('kyox:open-wallet'));
 
   return (
     <div className="swap-panel">
-      <div className="swap-title">EXECUTE SWAP <span style={{ color: '#6d7784', font: '9px DM Mono, monospace' }}>ARBITRUM / UNISWAP V2</span></div>
+      <div className="swap-title">EXECUTE SWAP <span style={{ color: '#6d7784', font: '9px DM Mono, monospace' }}>ROBINHOOD / UNISWAP</span></div>
       <div className="swap-box">
         <div className="swap-row">
           <span className="swap-label">YOU PAY</span>
@@ -194,8 +194,8 @@ export function SwapPanel() {
       </div>
       {!isConnected ? (
         <button className="swap-submit" type="button" onClick={requestWallet}><Wallet size={13} /> CONNECT WALLET TO TRADE</button>
-      ) : chainId !== ARBITRUM_CHAIN_ID ? (
-        <button className="swap-submit" type="button" onClick={() => switchChain({ chainId: ARBITRUM_CHAIN_ID })} disabled={switching}><Wallet size={13} /> SWITCH TO ARBITRUM ONE</button>
+      ) : chainId !== ROBINHOOD_CHAIN_ID ? (
+        <button className="swap-submit" type="button" onClick={() => switchChain({ chainId: ROBINHOOD_CHAIN_ID })} disabled={switching}><Wallet size={13} /> SWITCH TO ROBINHOOD CHAIN</button>
       ) : (
         <button className="swap-submit" type="button" onClick={executeSwap} disabled={!amount || !quote || busy || quoting}>
           {busy ? <LoaderCircle size={13} className="spin" /> : <Wallet size={13} />}
@@ -203,7 +203,7 @@ export function SwapPanel() {
         </button>
       )}
       <div style={{ marginTop: 10, color: status.includes('CONFIRMED') ? '#9ff6c4' : '#4f5966', font: '8px DM Mono, monospace', lineHeight: 1.7, textAlign: 'center', minHeight: 13 }}>
-        {status || '0.50% slippage protection. Transactions execute through the verified Arbitrum router.'}
+        {status || '0.50% slippage protection. Transactions execute on Robinhood Chain.'}
       </div>
     </div>
   );

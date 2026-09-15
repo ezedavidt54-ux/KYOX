@@ -16,13 +16,14 @@ import {
   zerionWallet,
 } from '@rainbow-me/rainbowkit/wallets';
 import { arbitrum, base, mainnet } from 'wagmi/chains';
+import { robinhoodChain } from '@/lib/robinhood';
 
 const walletConnectProjectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? 'KYOX_BUILD_PLACEHOLDER';
 
 export const wagmiConfig = getDefaultConfig({
   appName: 'KYOX',
   projectId: walletConnectProjectId,
-  chains: [arbitrum, base, mainnet],
+  chains: [robinhoodChain, arbitrum, base, mainnet],
   wallets: [
     {
       groupName: 'Recommended',

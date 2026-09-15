@@ -16,8 +16,7 @@ export function BlackHoleHeroSection() {
     let width = 0;
     let height = 0;
     let dpr = 1;
-    const stars = Array.from({ length: 420 }, (_, i) => ({
-      seed: i * 1.618,
+    const stars = Array.from({ length: 420 }, () => ({
       radius: 0.2 + Math.random() * 1.4,
       depth: 0.15 + Math.random() * 0.85,
       angle: Math.random() * Math.PI * 2,
@@ -64,7 +63,6 @@ export function BlackHoleHeroSection() {
       ctx.save();
       ctx.translate(cx, cy);
       ctx.rotate(-0.18 + Math.sin(frame * 0.3) * 0.012);
-
       const disk = ctx.createRadialGradient(0, 0, scale * 0.065, 0, 0, scale * 0.29);
       disk.addColorStop(0, 'rgba(0,0,0,0.98)');
       disk.addColorStop(0.22, 'rgba(255,255,255,0.035)');
@@ -89,7 +87,6 @@ export function BlackHoleHeroSection() {
       ctx.arc(cx, cy, scale * 0.22, 0, Math.PI * 2);
       ctx.fill();
 
-      const ring = ctx.createEllipse ? undefined : undefined;
       ctx.save();
       ctx.translate(cx, cy);
       ctx.scale(1, 0.28);
@@ -107,7 +104,6 @@ export function BlackHoleHeroSection() {
       vignette.addColorStop(1, 'rgba(0,0,0,0.7)');
       ctx.fillStyle = vignette;
       ctx.fillRect(0, 0, width, height);
-
       raf = requestAnimationFrame(draw);
     };
 

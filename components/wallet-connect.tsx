@@ -21,6 +21,19 @@ function connectionErrorMessage(error: Error) {
   return message.length > 140 ? `${message.slice(0, 137)}...` : message;
 }
 
+function walletIconUrl(name: string) {
+  const normalized = name.toLowerCase();
+  const matches: Array<[string, string]> = [
+    ['metamask', 'metamask'], ['coinbase', 'coinbase'], ['phantom', 'phantom'],
+    ['trust', 'trustwallet'], ['safepal', 'safepal'], ['okx', 'okx'],
+    ['walletconnect', 'walletconnect'], ['binance', 'binance'], ['rainbow', 'rainbow'],
+    ['rabby', 'rabby'], ['bitget', 'bitget'], ['bybit', 'bybit'],
+    ['uniswap', 'uniswap'], ['zerion', 'zerion'],
+  ];
+  const match = matches.find(([key]) => normalized.includes(key));
+  return match ? `https://cdn.simpleicons.org/${match[1]}` : undefined;
+}
+
 export function WalletConnect() {
   const { address, isConnected, chain } = useAccount();
   const { data: balance } = useBalance({ address });
@@ -50,13 +63,10 @@ export function WalletConnect() {
 
   const selectWallet = useCallback((connector: (typeof connectors)[number]) => {
     setConnectionError('');
-    connect(
-      { connector },
-      {
-        onSuccess: () => setOpen(false),
-        onError: (error) => setConnectionError(connectionErrorMessage(error)),
-      },
-    );
+    connect({ connector }, {
+      onSuccess: () => setOpen(false),
+      onError: (error) => setConnectionError(connectionErrorMessage(error)),
+    });
   }, [connect, connectors]);
 
   useEffect(() => {
@@ -89,21 +99,21 @@ export function WalletConnect() {
               </div>
               {connectionError && <div className="wallet-error" role="alert">{connectionError}</div>}
               <div className="wallet-list">
-                {filteredWallets.map((connector) => (
-                  <button className="wallet-option" key={connector.uid} disabled={isPending} onClick={() => selectWallet(connector)}>
-                    <span className="wallet-option-icon">
-                      {connector.icon ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={connector.icon} alt="" />
-                      ) : <Wallet size={20} />}
-                    </span>
-                    <span className="wallet-option-copy">
-                      <strong>{connector.name}</strong>
-                      <small>{connector.name === 'WalletConnect' ? 'Connect any compatible mobile wallet' : 'Secure non custodial connection'}</small>
-                    </span>
-                    <span className="wallet-option-arrow">↗</span>
-                  </button>
-                ))}
+                {filteredWallets.map((connector) => {
+                  const icon = walletIconUrl(connector.name) ?? connector.icon;
+                  return (
+                    <button className="wallet-option" key={connector.uid} disabled={isPending} onClick={() => selectWallet(connector)}>
+                      <span className="wallet-option-icon">
+                        {icon ? <img src={icon} alt={`${connector.name} icon`} /> : <Wallet size={20} />}
+                      </span>
+                      <span className="wallet-option-copy">
+                        <strong>{connector.name}</strong>
+                        <small>{connector.name === 'WalletConnect' ? 'Connect any compatible mobile wallet' : 'Secure non custodial connection'}</small>
+                      </span>
+                      <span className="wallet-option-arrow">↗</span>
+                    </button>
+                  );
+                })}
                 {!filteredWallets.length && <div className="wallet-empty">No compatible wallet found.</div>}
               </div>
               <div className="wallet-modal-foot"><span>SECURE CONNECTION</span><span>•</span><span>NON CUSTODIAL</span><span>•</span><span>{wallets.length} OPTIONS</span></div>

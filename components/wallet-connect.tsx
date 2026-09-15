@@ -2,13 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Check, Copy, ExternalLink, LogOut, Search, Wallet, X } from 'lucide-react';
-import {
-  useAccount,
-  useBalance,
-  useConnect,
-  useDisconnect,
-  useSwitchChain,
-} from 'wagmi';
+import { useAccount, useBalance, useConnect, useDisconnect, useSwitchChain } from 'wagmi';
 import {
   base as baseWallet,
   binanceWallet,
@@ -27,22 +21,7 @@ import {
 } from '@rainbow-me/rainbowkit/wallets';
 import { robinhoodChain } from '@/lib/wagmi';
 
-const walletDefinitions = [
-  metaMaskWallet,
-  baseWallet,
-  binanceWallet,
-  phantomWallet,
-  rainbowWallet,
-  okxWallet,
-  trustWallet,
-  rabbyWallet,
-  bitgetWallet,
-  bybitWallet,
-  uniswapWallet,
-  zerionWallet,
-  walletConnectWallet,
-  injectedWallet,
-];
+const walletDefinitions = [metaMaskWallet, baseWallet, binanceWallet, phantomWallet, rainbowWallet, okxWallet, trustWallet, rabbyWallet, bitgetWallet, bybitWallet, uniswapWallet, zerionWallet, walletConnectWallet, injectedWallet];
 
 const fallbackIcons: Record<string, string> = {
   MetaMask: 'https://cdn.simpleicons.org/metamask',
@@ -81,10 +60,10 @@ function shortAddress(address?: string) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
-function walletIcon(name: string) {
+function walletIcon(name: string, connectorIcon?: string) {
   const definition = walletDefinitions.find((wallet) => wallet.name === name);
   if (definition && typeof definition.iconUrl === 'string') return definition.iconUrl;
-  return fallbackIcons[name];
+  return connectorIcon ?? fallbackIcons[name];
 }
 
 export function WalletConnect() {
@@ -107,9 +86,7 @@ export function WalletConnect() {
     return [...unique.values()];
   }, [connectors]);
 
-  const filteredWallets = wallets.filter((wallet) =>
-    wallet.name.toLowerCase().includes(search.trim().toLowerCase()),
-  );
+  const filteredWallets = wallets.filter((wallet) => wallet.name.toLowerCase().includes(search.trim().toLowerCase()));
 
   const openWalletSelector = useCallback(() => {
     setSearch('');
@@ -141,7 +118,6 @@ export function WalletConnect() {
           <span className="wallet-orbit"><Wallet size={15} /></span>
           CONNECT WALLET
         </button>
-
         {open && (
           <div className="wallet-modal-backdrop" onMouseDown={() => setOpen(false)}>
             <div className="wallet-modal" onMouseDown={(event) => event.stopPropagation()}>
@@ -154,23 +130,18 @@ export function WalletConnect() {
                 </div>
                 <button className="modal-close" aria-label="Close wallet selector" onClick={() => setOpen(false)} type="button"><X size={18} /></button>
               </div>
-
               <div className="wallet-search">
                 <Search size={15} />
                 <input autoFocus value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search wallet" aria-label="Search wallets" />
               </div>
-
               <div className="wallet-list">
                 {filteredWallets.map((connector, index) => {
-                  const icon = walletIcon(connector.name);
+                  const icon = walletIcon(connector.name, connector.icon);
                   const failed = failedIcons[connector.name];
                   return (
                     <button className="wallet-option" key={connector.uid} disabled={isPending} onClick={() => void connectWallet(connector)} type="button">
                       <span className="wallet-option-icon">
-                        {icon && !failed ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={icon} alt="" onError={() => setFailedIcons((state) => ({ ...state, [connector.name]: true }))} />
-                        ) : <span className="wallet-letter">{connector.name.charAt(0)}</span>}
+                        {icon && !failed ? <img src={icon} alt="" onError={() => setFailedIcons((state) => ({ ...state, [connector.name]: true }))} /> : <span className="wallet-letter">{connector.name.charAt(0)}</span>}
                       </span>
                       <span className="wallet-option-copy">
                         <strong>{connector.name}</strong>
@@ -182,13 +153,7 @@ export function WalletConnect() {
                 })}
                 {!filteredWallets.length && <div className="wallet-empty">No compatible wallet found.</div>}
               </div>
-
-              {(connectError || connectionError) && (
-                <div className="wallet-connect-error">
-                  {connectError || connectionError?.message}
-                </div>
-              )}
-
+              {(connectError || connectionError) && <div className="wallet-connect-error">{connectError || connectionError?.message}</div>}
               <div className="wallet-modal-foot"><span>SECURE</span><span>•</span><span>NON CUSTODIAL</span><span>•</span><span>{wallets.length} AVAILABLE</span></div>
             </div>
           </div>
@@ -211,11 +176,7 @@ export function WalletConnect() {
       <div className="wallet-status-dot" />
       <div className="wallet-copy"><strong>{shortAddress(address)}</strong><span>{chain?.name ?? 'Unknown network'}</span></div>
       <span className="wallet-balance">{balance ? `${Number(balance.formatted).toFixed(4)} ${balance.symbol}` : '...'}</span>
-      {wrongNetwork && (
-        <button className="network-switch" type="button" disabled={isSwitching} onClick={() => void switchChainAsync({ chainId: robinhoodChain.id })}>
-          {isSwitching ? 'SWITCHING...' : 'SWITCH TO ROBINHOOD'}
-        </button>
-      )}
+      {wrongNetwork && <button className="network-switch" type="button" disabled={isSwitching} onClick={() => void switchChainAsync({ chainId: robinhoodChain.id })}>{isSwitching ? 'SWITCHING...' : 'SWITCH TO ROBINHOOD'}</button>}
       <button aria-label="Copy wallet address" className="icon-button" onClick={copyAddress} type="button">{copied ? <Check size={15} /> : <Copy size={15} />}</button>
       {explorer && <a aria-label="Open wallet on explorer" className="icon-button" href={`${explorer}/address/${address}`} target="_blank" rel="noreferrer"><ExternalLink size={15} /></a>}
       <button aria-label="Disconnect wallet" className="icon-button danger" onClick={() => disconnect()} type="button"><LogOut size={15} /></button>

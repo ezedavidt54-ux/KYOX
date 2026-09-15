@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Copy, ExternalLink, LogOut, Search, Wallet, X } from 'lucide-react';
-import { useAccount, useBalance, useConnect, useDisconnect } from 'wagmi';
+import { useAccount, useBalance, useConnect, useDisconnect, useSwitchChain } from 'wagmi';
+import { arbitrum } from 'wagmi/chains';
 
 function shortAddress(address?: string) {
   if (!address) return '';
@@ -14,6 +15,7 @@ export function WalletConnect() {
   const { data: balance } = useBalance({ address });
   const { connect, connectors, isPending } = useConnect();
   const { disconnect } = useDisconnect();
+  const { switchChain, isPending: isSwitching } = useSwitchChain();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [copied, setCopied] = useState(false);
@@ -99,12 +101,18 @@ export function WalletConnect() {
   };
 
   const explorer = chain?.blockExplorers?.default?.url;
+  const wrongNetwork = chain?.id !== arbitrum.id;
 
   return (
     <div className="wallet-connected">
       <div className="wallet-status-dot" />
       <div className="wallet-copy"><strong>{shortAddress(address)}</strong><span>{chain?.name ?? 'Unknown network'}</span></div>
       <span className="wallet-balance">{balance ? `${Number(balance.formatted).toFixed(4)} ${balance.symbol}` : '...'}</span>
+      {wrongNetwork && (
+        <button className="network-switch" type="button" disabled={isSwitching} onClick={() => switchChain({ chainId: arbitrum.id })}>
+          {isSwitching ? 'SWITCHING...' : 'SWITCH TO ARBITRUM'}
+        </button>
+      )}
       <button aria-label="Copy wallet address" className="icon-button" onClick={copyAddress}><Copy size={15} /></button>
       {explorer && <a aria-label="Open wallet on explorer" className="icon-button" href={`${explorer}/address/${address}`} target="_blank" rel="noreferrer"><ExternalLink size={15} /></a>}
       <button aria-label="Disconnect wallet" className="icon-button danger" onClick={() => disconnect()}><LogOut size={15} /></button>

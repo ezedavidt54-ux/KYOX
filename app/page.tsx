@@ -1,13 +1,14 @@
 import Link from 'next/link';
-import { ArrowUpRight, ChevronDown, Activity, Zap } from 'lucide-react';
+import { ArrowUpRight, ChevronDown, Activity } from 'lucide-react';
 import { BlackHoleHeroSection } from '@/components/ui/blackhole-hero-section';
 import { WalletConnect } from '@/components/wallet-connect';
+import { SwapPanel } from '@/components/swap-panel';
 
 const stats = [
-  ['TVL', '$12.84M'],
-  ['24H VOLUME', '$4.21M'],
-  ['LIQUIDITY', '$8.17M'],
-  ['ACTIVE TRADERS', '3,842'],
+  ['TVL', '—'],
+  ['24H VOLUME', '—'],
+  ['LIQUIDITY', '—'],
+  ['ACTIVE TRADERS', '—'],
 ];
 
 export default function Home() {
@@ -61,37 +62,16 @@ export default function Home() {
             <div className="market-top">
               <div>
                 <div className="pair">ETH / USDC</div>
-                <div className="price">3,942.18</div>
+                <div className="price">—</div>
               </div>
-              <div className="change">+4.82%</div>
+              <div className="change">LIVE FEED PENDING</div>
             </div>
             <div className="chart">
               <div className="chart-grid" />
-              <svg viewBox="0 0 800 210" preserveAspectRatio="none" aria-hidden="true">
-                <defs>
-                  <linearGradient id="area" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0" stopColor="white" stopOpacity=".13" />
-                    <stop offset="1" stopColor="white" stopOpacity="0" />
-                  </linearGradient>
-                </defs>
-                <path d="M0 165 L45 158 L78 171 L118 135 L150 146 L194 110 L230 127 L270 92 L310 101 L350 77 L389 89 L430 65 L470 78 L512 54 L554 72 L600 41 L642 56 L685 34 L726 50 L800 18 L800 210 L0 210Z" fill="url(#area)" />
-                <path d="M0 165 L45 158 L78 171 L118 135 L150 146 L194 110 L230 127 L270 92 L310 101 L350 77 L389 89 L430 65 L470 78 L512 54 L554 72 L600 41 L642 56 L685 34 L726 50 L800 18" fill="none" stroke="rgba(238,242,247,.8)" strokeWidth="2" vectorEffect="non-scaling-stroke" />
-              </svg>
+              <div className="chart-empty-state">MARKET DATA CONNECTION PENDING</div>
             </div>
           </div>
-          <div className="swap-panel">
-            <div className="swap-title">EXECUTE SWAP</div>
-            <div className="swap-box">
-              <div className="swap-row"><span className="swap-label">YOU PAY</span><div className="token"><span className="token-dot" /> ETH <ChevronDown size={12} /></div></div>
-              <div className="amount">0.00</div>
-              <div className="balance">BALANCE 0.0000 ETH</div>
-              <div className="swap-divider" />
-              <div className="swap-row"><span className="swap-label">YOU RECEIVE</span><div className="token"><span className="token-dot" /> USDC <ChevronDown size={12} /></div></div>
-              <div className="amount">0.00</div>
-              <div className="balance">ESTIMATED RECEIVE</div>
-            </div>
-            <button className="swap-submit"><Zap size={13} /> CONNECT WALLET TO TRADE</button>
-          </div>
+          <SwapPanel />
         </div>
       </section>
 
@@ -101,7 +81,7 @@ export default function Home() {
 
       <section id="liquidity" className="footer">
         <span>KYOX / ENTER THE UNKNOWN</span>
-        <span><Activity size={11} /> SYSTEM STATUS: OPERATIONAL</span>
+        <span><Activity size={11} /> SYSTEM STATUS: FOUNDATION ONLINE</span>
       </section>
     </main>
   );

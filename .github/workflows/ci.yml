@@ -1,6 +1,7 @@
 name: KYOX CI
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -31,4 +32,3 @@ jobs:
 
       - name: Build
         run: npm run build
-

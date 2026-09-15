@@ -31,6 +31,12 @@ export function WalletConnect() {
   );
 
   useEffect(() => {
+    const openWallet = () => setOpen(true);
+    window.addEventListener('kyox:open-wallet', openWallet);
+    return () => window.removeEventListener('kyox:open-wallet', openWallet);
+  }, []);
+
+  useEffect(() => {
     if (!open) setSearch('');
   }, [open]);
 
@@ -51,39 +57,22 @@ export function WalletConnect() {
                   <h2>CONNECT TO KYOX</h2>
                   <p>Choose your preferred wallet to enter the exchange.</p>
                 </div>
-                <button className="modal-close" aria-label="Close wallet selector" onClick={() => setOpen(false)}>
-                  <X size={18} />
-                </button>
+                <button className="modal-close" aria-label="Close wallet selector" onClick={() => setOpen(false)}><X size={18} /></button>
               </div>
 
               <div className="wallet-search">
                 <Search size={15} />
-                <input
-                  autoFocus
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Search wallets"
-                  aria-label="Search wallets"
-                />
+                <input autoFocus value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search wallets" aria-label="Search wallets" />
               </div>
 
               <div className="wallet-list">
                 {filteredWallets.map((connector) => (
-                  <button
-                    className="wallet-option"
-                    key={connector.uid}
-                    disabled={isPending}
-                    onClick={() => {
-                      connect({ connector }, { onSuccess: () => setOpen(false) });
-                    }}
-                  >
+                  <button className="wallet-option" key={connector.uid} disabled={isPending} onClick={() => connect({ connector }, { onSuccess: () => setOpen(false) })}>
                     <span className="wallet-option-icon">
                       {connector.icon ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={connector.icon} alt="" />
-                      ) : (
-                        <Wallet size={20} />
-                      )}
+                      ) : <Wallet size={20} />}
                     </span>
                     <span className="wallet-option-copy">
                       <strong>{connector.name}</strong>
@@ -95,13 +84,7 @@ export function WalletConnect() {
                 {!filteredWallets.length && <div className="wallet-empty">No compatible wallet found.</div>}
               </div>
 
-              <div className="wallet-modal-foot">
-                <span>SECURE CONNECTION</span>
-                <span>•</span>
-                <span>NON CUSTODIAL</span>
-                <span>•</span>
-                <span>{wallets.length} OPTIONS</span>
-              </div>
+              <div className="wallet-modal-foot"><span>SECURE CONNECTION</span><span>•</span><span>NON CUSTODIAL</span><span>•</span><span>{wallets.length} OPTIONS</span></div>
             </div>
           </div>
         )}
@@ -120,30 +103,11 @@ export function WalletConnect() {
   return (
     <div className="wallet-connected">
       <div className="wallet-status-dot" />
-      <div className="wallet-copy">
-        <strong>{shortAddress(address)}</strong>
-        <span>{chain?.name ?? 'Unknown network'}</span>
-      </div>
-      <span className="wallet-balance">
-        {balance ? `${Number(balance.formatted).toFixed(4)} ${balance.symbol}` : '...'}
-      </span>
-      <button aria-label="Copy wallet address" className="icon-button" onClick={copyAddress}>
-        <Copy size={15} />
-      </button>
-      {explorer && (
-        <a
-          aria-label="Open wallet on explorer"
-          className="icon-button"
-          href={`${explorer}/address/${address}`}
-          target="_blank"
-          rel="noreferrer"
-        >
-          <ExternalLink size={15} />
-        </a>
-      )}
-      <button aria-label="Disconnect wallet" className="icon-button danger" onClick={() => disconnect()}>
-        <LogOut size={15} />
-      </button>
+      <div className="wallet-copy"><strong>{shortAddress(address)}</strong><span>{chain?.name ?? 'Unknown network'}</span></div>
+      <span className="wallet-balance">{balance ? `${Number(balance.formatted).toFixed(4)} ${balance.symbol}` : '...'}</span>
+      <button aria-label="Copy wallet address" className="icon-button" onClick={copyAddress}><Copy size={15} /></button>
+      {explorer && <a aria-label="Open wallet on explorer" className="icon-button" href={`${explorer}/address/${address}`} target="_blank" rel="noreferrer"><ExternalLink size={15} /></a>}
+      <button aria-label="Disconnect wallet" className="icon-button danger" onClick={() => disconnect()}><LogOut size={15} /></button>
       {copied && <span className="copy-toast">COPIED</span>}
     </div>
   );

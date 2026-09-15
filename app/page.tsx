@@ -1,22 +1,16 @@
 import Link from 'next/link';
-import { ArrowUpRight, ChevronDown, Activity } from 'lucide-react';
+import { ArrowUpRight, Activity, ChevronDown, Radio, ShieldCheck } from 'lucide-react';
 import { BlackHoleHeroSection } from '@/components/ui/blackhole-hero-section';
+import { LiveMarket } from '@/components/live-market';
 import { WalletConnect } from '@/components/wallet-connect';
 import { SwapPanel } from '@/components/swap-panel';
-
-const stats = [
-  ['TVL', '—'],
-  ['24H VOLUME', '—'],
-  ['LIQUIDITY', '—'],
-  ['ACTIVE TRADERS', '—'],
-];
 
 export default function Home() {
   return (
     <main className="site-shell">
       <header className="navbar">
         <Link href="/" className="brand">
-          <span className="brand-mark" />
+          <span className="brand-mark"><span /></span>
           <span className="brand-name">KYOX</span>
         </Link>
         <nav className="nav-links" aria-label="Primary navigation">
@@ -26,57 +20,47 @@ export default function Home() {
           <Link href="#analytics">Analytics</Link>
         </nav>
         <div className="nav-meta">
-          <span className="network-pill">ARBITRUM ONE</span>
+          <span className="network-pill"><span /> ARBITRUM ONE</span>
           <WalletConnect />
         </div>
       </header>
 
       <section className="hero">
         <div className="hero-grid" />
+        <div className="hero-scanline" />
         <BlackHoleHeroSection />
+        <div className="hero-orbital-label">KYOX / GATEWAY 001</div>
         <div className="hero-content">
-          <div className="eyebrow">KYOX / ON CHAIN TERMINAL</div>
+          <div className="eyebrow"><span className="eyebrow-dot" /> ON CHAIN TERMINAL / ARBITRUM</div>
           <h1>ENTER <span>THE UNKNOWN</span></h1>
-          <p className="hero-copy">
-            A new interface for on chain markets. Trade, route liquidity and read the market from one cinematic command surface.
-          </p>
+          <p className="hero-copy">A cinematic command surface for discovering markets, routing liquidity and executing on chain.</p>
           <div className="hero-actions">
             <a className="primary-cta" href="#swap">Open terminal <ArrowUpRight size={14} /></a>
-            <a className="secondary-cta" href="#markets">Explore markets <ChevronDown size={14} /></a>
+            <a className="secondary-cta" href="#markets">View live market <ChevronDown size={14} /></a>
           </div>
+          <div className="hero-trust"><ShieldCheck size={13} /> NON CUSTODIAL <span /> REAL ON CHAIN EXECUTION <span /> ARBITRUM ONE</div>
         </div>
-        <div className="hero-index"><strong>01</strong> / 04 &nbsp; SYSTEM ONLINE</div>
+        <div className="hero-index"><strong>01</strong><span> / 04</span><br />SYSTEM ONLINE</div>
       </section>
 
       <section className="command-deck" id="swap" aria-label="KYOX trading terminal">
         <div className="deck-head">
-          <div className="deck-title"><span className="live">●</span> KYOX TERMINAL / LIVE</div>
-          <div className="deck-tabs">
-            <button className="active">Spot</button>
-            <button>Limit</button>
-            <button>Route</button>
-          </div>
+          <div className="deck-title"><span className="live-pulse" /> KYOX TERMINAL <span className="muted-slash">/</span> LIVE MARKET</div>
+          <div className="deck-tabs"><button className="active">Spot</button><button>Limit</button><button>Route</button></div>
         </div>
         <div className="deck-body">
           <div className="market-panel" id="markets">
-            <div className="market-top">
-              <div>
-                <div className="pair">ETH / USDC</div>
-                <div className="price">—</div>
-              </div>
-              <div className="change">LIVE FEED PENDING</div>
-            </div>
-            <div className="chart">
-              <div className="chart-grid" />
-              <div className="chart-empty-state">MARKET DATA CONNECTION PENDING</div>
-            </div>
+            <div className="market-kicker"><Radio size={11} /> LIVE MARKET DATA</div>
+            <LiveMarket />
           </div>
           <SwapPanel />
         </div>
       </section>
 
-      <section className="stats" id="analytics">
-        {stats.map(([label, value]) => <div className="stat" key={label}><span>{label}</span><strong>{value}</strong></div>)}
+      <section className="feature-strip" id="analytics">
+        <div><span>01</span><strong>READ THE MARKET</strong><p>Live liquidity, price action and execution context from the chain.</p></div>
+        <div><span>02</span><strong>ROUTE WITH PRECISION</strong><p>Quotes and transactions are resolved against on chain liquidity.</p></div>
+        <div><span>03</span><strong>KEEP CONTROL</strong><p>Your wallet signs every transaction. KYOX never takes custody.</p></div>
       </section>
 
       <section id="liquidity" className="footer">

@@ -1,9 +1,41 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Copy, ExternalLink, LogOut, Search, Wallet, X } from 'lucide-react';
+import { Check, Copy, ExternalLink, LogOut, Search, Wallet, X } from 'lucide-react';
 import { useAccount, useBalance, useConnect, useDisconnect, useSwitchChain } from 'wagmi';
 import { arbitrum } from 'wagmi/chains';
+
+const walletIcons: Record<string, string> = {
+  MetaMask: 'https://cdn.simpleicons.org/metamask',
+  Base: 'https://cdn.simpleicons.org/coinbase',
+  'Binance Web3 Wallet': 'https://cdn.simpleicons.org/binance',
+  Phantom: 'https://cdn.simpleicons.org/phantom',
+  Rainbow: 'https://cdn.simpleicons.org/rainbow',
+  'OKX Wallet': 'https://cdn.simpleicons.org/okx',
+  'Trust Wallet': 'https://cdn.simpleicons.org/trustwallet',
+  'Rabby Wallet': 'https://cdn.simpleicons.org/rabby',
+  Bitget: 'https://cdn.simpleicons.org/bitget',
+  'Bybit Wallet': 'https://cdn.simpleicons.org/bybit',
+  'Uniswap Wallet': 'https://cdn.simpleicons.org/uniswap',
+  Zerion: 'https://cdn.simpleicons.org/zerion',
+  WalletConnect: 'https://cdn.simpleicons.org/walletconnect',
+};
+
+const walletDescriptions: Record<string, string> = {
+  MetaMask: 'Browser and mobile wallet',
+  Base: 'Coinbase smart wallet',
+  'Binance Web3 Wallet': 'Binance self custody wallet',
+  Phantom: 'Multichain wallet for mobile and web',
+  Rainbow: 'Beautiful multichain wallet',
+  'OKX Wallet': 'Multichain Web3 wallet',
+  'Trust Wallet': 'Mobile first self custody wallet',
+  'Rabby Wallet': 'Security focused EVM wallet',
+  Bitget: 'Multichain trading wallet',
+  'Bybit Wallet': 'Web3 wallet from Bybit',
+  'Uniswap Wallet': 'Wallet from Uniswap',
+  Zerion: 'Portfolio and self custody wallet',
+  WalletConnect: 'Connect any compatible wallet',
+};
 
 function shortAddress(address?: string) {
   if (!address) return '';
@@ -19,6 +51,7 @@ export function WalletConnect() {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [copied, setCopied] = useState(false);
+  const [failedIcons, setFailedIcons] = useState<Record<string, boolean>>({});
 
   const wallets = useMemo(() => {
     const unique = new Map<string, (typeof connectors)[number]>();
@@ -43,51 +76,65 @@ export function WalletConnect() {
     return () => window.removeEventListener('kyox:open-wallet', openWallet);
   }, [openWalletSelector]);
 
+  const connectWallet = async (connector: (typeof connectors)[number]) => {
+    try {
+      await connect({ connector });
+      setOpen(false);
+    } catch {
+      // Wagmi exposes the connection error through its connector state.
+    }
+  };
+
   if (!isConnected || !address) {
     return (
       <>
         <button className="wallet-button" onClick={openWalletSelector}>
-          <span className="wallet-orbit"><Wallet size={16} /></span>
+          <span className="wallet-orbit"><Wallet size={15} /></span>
           CONNECT WALLET
         </button>
 
         {open && (
           <div className="wallet-modal-backdrop" onMouseDown={() => setOpen(false)}>
             <div className="wallet-modal" onMouseDown={(event) => event.stopPropagation()}>
+              <div className="wallet-modal-glow" />
               <div className="wallet-modal-head">
                 <div>
-                  <span className="wallet-modal-kicker">KYOX ACCESS</span>
-                  <h2>CONNECT TO KYOX</h2>
-                  <p>Choose your preferred wallet to enter the exchange.</p>
+                  <span className="wallet-modal-kicker">KYOX ACCESS / 01</span>
+                  <h2>ENTER THE NETWORK</h2>
+                  <p>Choose a wallet. Your keys never leave your wallet.</p>
                 </div>
                 <button className="modal-close" aria-label="Close wallet selector" onClick={() => setOpen(false)}><X size={18} /></button>
               </div>
 
               <div className="wallet-search">
                 <Search size={15} />
-                <input autoFocus value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search wallets" aria-label="Search wallets" />
+                <input autoFocus value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search wallet" aria-label="Search wallets" />
               </div>
 
               <div className="wallet-list">
-                {filteredWallets.map((connector) => (
-                  <button className="wallet-option" key={connector.uid} disabled={isPending} onClick={() => connect({ connector }, { onSuccess: () => setOpen(false) })}>
-                    <span className="wallet-option-icon">
-                      {connector.icon ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={connector.icon} alt="" />
-                      ) : <Wallet size={20} />}
-                    </span>
-                    <span className="wallet-option-copy">
-                      <strong>{connector.name}</strong>
-                      <small>{connector.name === 'WalletConnect' ? 'Connect any compatible mobile wallet' : 'Secure non custodial connection'}</small>
-                    </span>
-                    <span className="wallet-option-arrow">↗</span>
-                  </button>
-                ))}
+                {filteredWallets.map((connector, index) => {
+                  const icon = walletIcons[connector.name];
+                  const failed = failedIcons[connector.name];
+                  return (
+                    <button className="wallet-option" key={connector.uid} disabled={isPending} onClick={() => void connectWallet(connector)}>
+                      <span className="wallet-option-icon">
+                        {icon && !failed ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={icon} alt="" onError={() => setFailedIcons((state) => ({ ...state, [connector.name]: true }))} />
+                        ) : <span className="wallet-letter">{connector.name.charAt(0)}</span>}
+                      </span>
+                      <span className="wallet-option-copy">
+                        <strong>{connector.name}</strong>
+                        <small>{walletDescriptions[connector.name] ?? 'Secure non custodial connection'}</small>
+                      </span>
+                      <span className="wallet-option-index">{String(index + 1).padStart(2, '0')}</span>
+                    </button>
+                  );
+                })}
                 {!filteredWallets.length && <div className="wallet-empty">No compatible wallet found.</div>}
               </div>
 
-              <div className="wallet-modal-foot"><span>SECURE CONNECTION</span><span>•</span><span>NON CUSTODIAL</span><span>•</span><span>{wallets.length} OPTIONS</span></div>
+              <div className="wallet-modal-foot"><span>SECURE</span><span>•</span><span>NON CUSTODIAL</span><span>•</span><span>{wallets.length} AVAILABLE</span></div>
             </div>
           </div>
         )}
@@ -114,10 +161,9 @@ export function WalletConnect() {
           {isSwitching ? 'SWITCHING...' : 'SWITCH TO ARBITRUM'}
         </button>
       )}
-      <button aria-label="Copy wallet address" className="icon-button" onClick={copyAddress}><Copy size={15} /></button>
+      <button aria-label="Copy wallet address" className="icon-button" onClick={copyAddress}>{copied ? <Check size={15} /> : <Copy size={15} />}</button>
       {explorer && <a aria-label="Open wallet on explorer" className="icon-button" href={`${explorer}/address/${address}`} target="_blank" rel="noreferrer"><ExternalLink size={15} /></a>}
       <button aria-label="Disconnect wallet" className="icon-button danger" onClick={() => disconnect()}><LogOut size={15} /></button>
-      {copied && <span className="copy-toast">COPIED</span>}
     </div>
   );
 }

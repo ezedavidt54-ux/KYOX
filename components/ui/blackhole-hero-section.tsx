@@ -16,10 +16,11 @@ export function BlackHoleHeroSection() {
     let width = 0;
     let height = 0;
     let dpr = 1;
-    const stars = Array.from({ length: 420 }, () => ({
-      radius: 0.2 + Math.random() * 1.4,
+    const stars = Array.from({ length: 560 }, () => ({
+      radius: 0.25 + Math.random() * 1.5,
       depth: 0.15 + Math.random() * 0.85,
       angle: Math.random() * Math.PI * 2,
+      phase: Math.random() * Math.PI * 2,
     }));
 
     const resize = () => {
@@ -33,28 +34,29 @@ export function BlackHoleHeroSection() {
     };
 
     const draw = () => {
-      frame += 0.005;
+      frame += 0.008;
       ctx.clearRect(0, 0, width, height);
-
-      const cx = width * 0.67;
-      const cy = height * 0.5;
+      const cx = width * (width < 700 ? 0.67 : 0.69);
+      const cy = height * 0.47;
       const scale = Math.min(width, height);
 
-      const background = ctx.createRadialGradient(cx, cy, scale * 0.03, cx, cy, scale * 0.62);
-      background.addColorStop(0, 'rgba(255,255,255,0.025)');
-      background.addColorStop(0.32, 'rgba(60,75,105,0.018)');
-      background.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = background;
+      const aura = ctx.createRadialGradient(cx, cy, scale * .03, cx, cy, scale * .6);
+      aura.addColorStop(0, 'rgba(135,196,255,.11)');
+      aura.addColorStop(.25, 'rgba(96,123,255,.07)');
+      aura.addColorStop(.55, 'rgba(93,72,185,.035)');
+      aura.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = aura;
       ctx.fillRect(0, 0, width, height);
 
       for (const star of stars) {
-        const orbit = scale * (0.22 + star.depth * 0.62);
-        const angle = star.angle + frame * (0.08 + star.depth * 0.15);
+        const orbit = scale * (.22 + star.depth * .7);
+        const angle = star.angle + frame * (.06 + star.depth * .22);
         const x = cx + Math.cos(angle) * orbit;
-        const y = cy + Math.sin(angle) * orbit * 0.62;
+        const y = cy + Math.sin(angle) * orbit * .58;
         if (x < 0 || x > width || y < 0 || y > height) continue;
-        const alpha = 0.08 + star.depth * 0.4;
-        ctx.fillStyle = `rgba(210,220,235,${alpha})`;
+        const twinkle = .55 + .45 * Math.sin(frame * 2 + star.phase);
+        const alpha = (.08 + star.depth * .42) * twinkle;
+        ctx.fillStyle = `rgba(195,222,255,${alpha})`;
         ctx.beginPath();
         ctx.arc(x, y, star.radius * star.depth, 0, Math.PI * 2);
         ctx.fill();
@@ -62,46 +64,58 @@ export function BlackHoleHeroSection() {
 
       ctx.save();
       ctx.translate(cx, cy);
-      ctx.rotate(-0.18 + Math.sin(frame * 0.3) * 0.012);
-      const disk = ctx.createRadialGradient(0, 0, scale * 0.065, 0, 0, scale * 0.29);
-      disk.addColorStop(0, 'rgba(0,0,0,0.98)');
-      disk.addColorStop(0.22, 'rgba(255,255,255,0.035)');
-      disk.addColorStop(0.38, 'rgba(226,236,255,0.16)');
-      disk.addColorStop(0.5, 'rgba(115,139,190,0.1)');
-      disk.addColorStop(0.68, 'rgba(75,95,140,0.055)');
+      ctx.rotate(-.16 + frame * .035);
+      const disk = ctx.createRadialGradient(0, 0, scale * .045, 0, 0, scale * .38);
+      disk.addColorStop(0, 'rgba(0,0,0,1)');
+      disk.addColorStop(.16, 'rgba(246,249,255,.22)');
+      disk.addColorStop(.29, 'rgba(108,211,255,.38)');
+      disk.addColorStop(.42, 'rgba(151,113,255,.22)');
+      disk.addColorStop(.56, 'rgba(74,150,255,.13)');
+      disk.addColorStop(.74, 'rgba(75,83,164,.06)');
       disk.addColorStop(1, 'rgba(0,0,0,0)');
       ctx.fillStyle = disk;
-      ctx.scale(1, 0.25);
+      ctx.scale(1, .23);
       ctx.beginPath();
-      ctx.arc(0, 0, scale * 0.34, 0, Math.PI * 2);
+      ctx.arc(0, 0, scale * .4, 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
 
-      const glow = ctx.createRadialGradient(cx, cy, scale * 0.06, cx, cy, scale * 0.22);
-      glow.addColorStop(0, 'rgba(0,0,0,1)');
-      glow.addColorStop(0.45, 'rgba(0,0,0,0.98)');
-      glow.addColorStop(0.68, 'rgba(0,0,0,0.7)');
-      glow.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = glow;
+      const ring = ctx.createRadialGradient(cx, cy, scale * .09, cx, cy, scale * .25);
+      ring.addColorStop(0, 'rgba(0,0,0,1)');
+      ring.addColorStop(.46, 'rgba(0,0,0,.99)');
+      ring.addColorStop(.6, 'rgba(9,14,22,.8)');
+      ring.addColorStop(.7, 'rgba(119,193,255,.18)');
+      ring.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = ring;
       ctx.beginPath();
-      ctx.arc(cx, cy, scale * 0.22, 0, Math.PI * 2);
+      ctx.arc(cx, cy, scale * .25, 0, Math.PI * 2);
       ctx.fill();
 
       ctx.save();
       ctx.translate(cx, cy);
-      ctx.scale(1, 0.28);
-      ctx.strokeStyle = 'rgba(219,228,245,0.18)';
-      ctx.lineWidth = Math.max(1, scale * 0.004);
-      ctx.shadowBlur = scale * 0.025;
-      ctx.shadowColor = 'rgba(190,205,235,0.4)';
+      ctx.rotate(frame * .03);
+      ctx.scale(1, .27);
+      ctx.strokeStyle = 'rgba(182,222,255,.38)';
+      ctx.lineWidth = Math.max(1.2, scale * .004);
+      ctx.shadowBlur = scale * .04;
+      ctx.shadowColor = 'rgba(95,188,255,.85)';
       ctx.beginPath();
-      ctx.arc(0, 0, scale * 0.17, 0, Math.PI * 2);
+      ctx.arc(0, 0, scale * .19, 0, Math.PI * 2);
       ctx.stroke();
       ctx.restore();
 
-      const vignette = ctx.createRadialGradient(width / 2, height / 2, scale * 0.18, width / 2, height / 2, scale * 0.72);
+      const lens = ctx.createRadialGradient(cx, cy, scale * .22, cx, cy, scale * .42);
+      lens.addColorStop(0, 'rgba(75,146,255,.07)');
+      lens.addColorStop(.42, 'rgba(139,102,255,.025)');
+      lens.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = lens;
+      ctx.beginPath();
+      ctx.arc(cx, cy, scale * .42, 0, Math.PI * 2);
+      ctx.fill();
+
+      const vignette = ctx.createRadialGradient(width / 2, height / 2, scale * .2, width / 2, height / 2, scale * .78);
       vignette.addColorStop(0, 'rgba(0,0,0,0)');
-      vignette.addColorStop(1, 'rgba(0,0,0,0.7)');
+      vignette.addColorStop(1, 'rgba(2,5,9,.55)');
       ctx.fillStyle = vignette;
       ctx.fillRect(0, 0, width, height);
       raf = requestAnimationFrame(draw);

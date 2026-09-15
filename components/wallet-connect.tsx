@@ -61,8 +61,6 @@ function shortAddress(address?: string) {
 }
 
 function walletIcon(name: string, connectorIcon?: string) {
-  const definition = walletDefinitions.find((wallet) => wallet.name === name);
-  if (definition && typeof definition.iconUrl === 'string') return definition.iconUrl;
   return connectorIcon ?? fallbackIcons[name];
 }
 

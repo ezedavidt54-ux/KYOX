@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Copy, ExternalLink, LogOut, Search, Wallet, X } from 'lucide-react';
 import { useAccount, useBalance, useConnect, useDisconnect, useSwitchChain } from 'wagmi';
-import { arbitrum } from 'wagmi/chains';
+import { ROBINHOOD_CHAIN_ID } from '@/lib/robinhood';
 
 function shortAddress(address?: string) {
   if (!address) return '';
@@ -28,9 +28,7 @@ export function WalletConnect() {
     return [...unique.values()];
   }, [connectors]);
 
-  const filteredWallets = wallets.filter((wallet) =>
-    wallet.name.toLowerCase().includes(search.trim().toLowerCase()),
-  );
+  const filteredWallets = wallets.filter((wallet) => wallet.name.toLowerCase().includes(search.trim().toLowerCase()));
 
   const openWalletSelector = useCallback(() => {
     setSearch('');
@@ -50,7 +48,6 @@ export function WalletConnect() {
           <span className="wallet-orbit"><Wallet size={16} /></span>
           CONNECT WALLET
         </button>
-
         {open && (
           <div className="wallet-modal-backdrop" onMouseDown={() => setOpen(false)}>
             <div className="wallet-modal" onMouseDown={(event) => event.stopPropagation()}>
@@ -62,12 +59,10 @@ export function WalletConnect() {
                 </div>
                 <button className="modal-close" aria-label="Close wallet selector" onClick={() => setOpen(false)}><X size={18} /></button>
               </div>
-
               <div className="wallet-search">
                 <Search size={15} />
                 <input autoFocus value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search wallets" aria-label="Search wallets" />
               </div>
-
               <div className="wallet-list">
                 {filteredWallets.map((connector) => (
                   <button className="wallet-option" key={connector.uid} disabled={isPending} onClick={() => connect({ connector }, { onSuccess: () => setOpen(false) })}>
@@ -86,7 +81,6 @@ export function WalletConnect() {
                 ))}
                 {!filteredWallets.length && <div className="wallet-empty">No compatible wallet found.</div>}
               </div>
-
               <div className="wallet-modal-foot"><span>SECURE CONNECTION</span><span>•</span><span>NON CUSTODIAL</span><span>•</span><span>{wallets.length} OPTIONS</span></div>
             </div>
           </div>
@@ -102,7 +96,7 @@ export function WalletConnect() {
   };
 
   const explorer = chain?.blockExplorers?.default?.url;
-  const wrongNetwork = chain?.id !== arbitrum.id;
+  const wrongNetwork = chain?.id !== ROBINHOOD_CHAIN_ID;
 
   return (
     <div className="wallet-connected">
@@ -110,8 +104,8 @@ export function WalletConnect() {
       <div className="wallet-copy"><strong>{shortAddress(address)}</strong><span>{chain?.name ?? 'Unknown network'}</span></div>
       <span className="wallet-balance">{balance ? `${Number(balance.formatted).toFixed(4)} ${balance.symbol}` : '...'}</span>
       {wrongNetwork && (
-        <button className="network-switch" type="button" disabled={isSwitching} onClick={() => switchChain({ chainId: arbitrum.id })}>
-          {isSwitching ? 'SWITCHING...' : 'SWITCH TO ARBITRUM'}
+        <button className="network-switch" type="button" disabled={isSwitching} onClick={() => switchChain({ chainId: ROBINHOOD_CHAIN_ID })}>
+          {isSwitching ? 'SWITCHING...' : 'SWITCH TO ROBINHOOD'}
         </button>
       )}
       <button aria-label="Copy wallet address" className="icon-button" onClick={copyAddress}><Copy size={15} /></button>

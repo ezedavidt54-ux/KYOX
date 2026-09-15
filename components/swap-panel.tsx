@@ -34,7 +34,6 @@ export function SwapPanel() {
 
   const fromSymbol = flipped ? 'USDC' : 'ETH';
   const toSymbol = flipped ? 'ETH' : 'USDC';
-  const fromDecimals = flipped ? 6 : 18;
   const fromBalance = flipped ? usdcBalance : nativeBalance;
 
   const balanceLabel = useMemo(() => {
@@ -191,7 +190,7 @@ export function SwapPanel() {
           <div className="token"><span className="token-dot" /> {toSymbol} <ChevronDown size={12} /></div>
         </div>
         <div className="amount" style={{ color: quote ? '#fff' : '#6d7784', fontSize: 22 }}>{receiveLabel}</div>
-        <div className="balance">{quote ? `1%? NO. ${SLIPPAGE_BPS / 100}% MAX SLIPPAGE` : 'LIVE ON CHAIN QUOTE'}</div>
+        <div className="balance">{quote ? `${SLIPPAGE_BPS / 100}% MAX SLIPPAGE` : 'LIVE ON CHAIN QUOTE'}</div>
       </div>
       {!isConnected ? (
         <button className="swap-submit" type="button" onClick={requestWallet}><Wallet size={13} /> CONNECT WALLET TO TRADE</button>

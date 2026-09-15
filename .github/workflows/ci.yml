@@ -1,10 +1,12 @@
 name: KYOX CI
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
       - kyox-swap-execution
+      - kyox-interface-v2
   pull_request:
     branches:
       - main

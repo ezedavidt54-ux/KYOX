@@ -32,20 +32,21 @@ export function WalletConnect() {
     wallet.name.toLowerCase().includes(search.trim().toLowerCase()),
   );
 
+  const openWalletSelector = () => {
+    setSearch('');
+    setOpen(true);
+  };
+
   useEffect(() => {
-    const openWallet = () => setOpen(true);
+    const openWallet = () => openWalletSelector();
     window.addEventListener('kyox:open-wallet', openWallet);
     return () => window.removeEventListener('kyox:open-wallet', openWallet);
   }, []);
 
-  useEffect(() => {
-    if (!open) setSearch('');
-  }, [open]);
-
   if (!isConnected || !address) {
     return (
       <>
-        <button className="wallet-button" onClick={() => setOpen(true)}>
+        <button className="wallet-button" onClick={openWalletSelector}>
           <span className="wallet-orbit"><Wallet size={16} /></span>
           CONNECT WALLET
         </button>

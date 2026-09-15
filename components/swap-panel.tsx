@@ -36,14 +36,11 @@ export function SwapPanel() {
     }
   };
 
-  const requestWallet = () => {
-    window.dispatchEvent(new Event('kyox:open-wallet'));
-  };
+  const requestWallet = () => window.dispatchEvent(new Event('kyox:open-wallet'));
 
   return (
     <div className="swap-panel">
       <div className="swap-title">EXECUTE SWAP</div>
-
       <div className="swap-box">
         <div className="swap-row">
           <span className="swap-label">YOU PAY</span>
@@ -51,44 +48,35 @@ export function SwapPanel() {
             <span className="token-dot" /> {fromSymbol} <ChevronDown size={12} />
           </button>
         </div>
-        <div className="swap-input-row">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14 }}>
           <input
+            style={{ flex: 1, minWidth: 0, border: 0, outline: 0, background: 'transparent', color: '#fff', font: '500 30px DM Mono, monospace' }}
             inputMode="decimal"
             value={amount}
             onChange={(event) => changeAmount(event.target.value)}
             placeholder="0.00"
             aria-label={`Amount of ${fromSymbol} to swap`}
           />
-          <button className="max-button" type="button" onClick={setMax} disabled={!isConnected || fromSymbol !== nativeSymbol}>
-            MAX
-          </button>
+          <button type="button" onClick={setMax} disabled={!isConnected || fromSymbol !== nativeSymbol} style={{ padding: '5px 8px', border: '1px solid rgba(255,255,255,.1)', borderRadius: 7, background: 'rgba(255,255,255,.04)', color: '#9aa4b1', font: '9px DM Mono, monospace' }}>MAX</button>
         </div>
         <div className="balance">{balanceLabel}</div>
-
-        <button className="swap-flip" type="button" aria-label="Reverse swap pair" onClick={() => setFlipped((value) => !value)}>
+        <button type="button" aria-label="Reverse swap pair" onClick={() => setFlipped((value) => !value)} style={{ display: 'grid', placeItems: 'center', width: 30, height: 30, margin: '14px auto -2px', border: '1px solid rgba(255,255,255,.1)', borderRadius: 8, background: '#0b0e12', color: '#aab4c0' }}>
           <ArrowDownUp size={14} />
         </button>
-
         <div className="swap-divider" />
         <div className="swap-row">
           <span className="swap-label">YOU RECEIVE</span>
           <div className="token"><span className="token-dot" /> {toSymbol} <ChevronDown size={12} /></div>
         </div>
-        <div className="amount muted-amount">{amount ? 'QUOTE PENDING' : '0.00'}</div>
+        <div className="amount" style={{ color: amount ? '#6d7784' : '#fff', fontSize: 22 }}>{amount ? 'QUOTE PENDING' : '0.00'}</div>
         <div className="balance">LIVE ROUTER QUOTE WILL APPEAR HERE</div>
       </div>
-
       {!isConnected ? (
-        <button className="swap-submit" type="button" onClick={requestWallet}>
-          <Wallet size={13} /> CONNECT WALLET TO TRADE
-        </button>
+        <button className="swap-submit" type="button" onClick={requestWallet}><Wallet size={13} /> CONNECT WALLET TO TRADE</button>
       ) : (
-        <button className="swap-submit" type="button" disabled>
-          <LoaderCircle size={13} /> ROUTER AWAITING DEPLOYMENT
-        </button>
+        <button className="swap-submit" type="button" disabled><LoaderCircle size={13} /> ROUTER AWAITING DEPLOYMENT</button>
       )}
-
-      <div className="swap-disclaimer">
+      <div style={{ marginTop: 10, color: '#4f5966', font: '8px DM Mono, monospace', lineHeight: 1.7, textAlign: 'center' }}>
         KYOX will only submit transactions after an on chain routing contract and live quote source are configured.
       </div>
     </div>

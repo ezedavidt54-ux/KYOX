@@ -3,7 +3,7 @@ import { parseUnits, encodeFunctionData, type Address } from 'viem';
 export const ROBINHOOD_CHAIN_ID = 4663;
 export const WETH_ROBINHOOD = '0x0Bd7D308f8E1639FAb988df18A8011f41EAcAD73' as Address;
 export const USDC_ROBINHOOD = '0x378f906ead242f0c3aa9ed45aa07612a2c088030' as Address;
-export const UNISWAP_SWAP_ROUTER_ROBINHOOD = '0xCaf681a66D020601342297493863E78C959E5cb2' as Address;
+export const UNISWAP_V2_ROUTER_ROBINHOOD = '0x89e5DB8B5aA49aA85AC63f691524311AEB649eba' as Address;
 
 export const erc20Abi = [
   { type: 'function', name: 'allowance', stateMutability: 'view', inputs: [{ name: 'owner', type: 'address' }, { name: 'spender', type: 'address' }], outputs: [{ name: '', type: 'uint256' }] },
@@ -19,7 +19,8 @@ export const routerAbi = [
 ] as const;
 
 export function parseSwapAmount(value: string, symbol: 'ETH' | 'USDC') {
-  return parseUnits(value, 18);
+  const decimals = symbol === 'ETH' ? 18 : 18;
+  return parseUnits(value, decimals);
 }
 
 export function minimumOutput(amountOut: bigint, slippageBps = 50) {
@@ -31,5 +32,5 @@ export function deadlineSeconds(seconds = 900) {
 }
 
 export function encodeApprove(amount: bigint) {
-  return encodeFunctionData({ abi: erc20Abi, functionName: 'approve', args: [UNISWAP_SWAP_ROUTER_ROBINHOOD, amount] });
+  return encodeFunctionData({ abi: erc20Abi, functionName: 'approve', args: [UNISWAP_V2_ROUTER_ROBINHOOD, amount] });
 }

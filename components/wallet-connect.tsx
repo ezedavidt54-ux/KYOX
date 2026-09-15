@@ -2,7 +2,7 @@
 
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { useAccount, useBalance, useDisconnect } from 'wagmi';
-import { Copy, LogOut, Wallet, ExternalLink } from 'lucide-react';
+import { Copy, ExternalLink, LogOut, Wallet } from 'lucide-react';
 import { useState } from 'react';
 
 function shortAddress(address?: string) {
@@ -32,6 +32,8 @@ export function WalletConnect() {
     window.setTimeout(() => setCopied(false), 1200);
   };
 
+  const explorer = chain?.blockExplorers?.default?.url;
+
   return (
     <div className="wallet-connected">
       <div className="wallet-status-dot" />
@@ -45,15 +47,17 @@ export function WalletConnect() {
       <button aria-label="Copy wallet address" className="icon-button" onClick={copyAddress}>
         <Copy size={15} />
       </button>
-      <a
-        aria-label="Open wallet on explorer"
-        className="icon-button"
-        href={`https://arbiscan.io/address/${address}`}
-        target="_blank"
-        rel="noreferrer"
-      >
-        <ExternalLink size={15} />
-      </a>
+      {explorer && (
+        <a
+          aria-label="Open wallet on explorer"
+          className="icon-button"
+          href={`${explorer}/address/${address}`}
+          target="_blank"
+          rel="noreferrer"
+        >
+          <ExternalLink size={15} />
+        </a>
+      )}
       <button aria-label="Disconnect wallet" className="icon-button danger" onClick={() => disconnect()}>
         <LogOut size={15} />
       </button>

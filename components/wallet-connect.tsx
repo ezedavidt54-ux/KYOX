@@ -10,6 +10,17 @@ function shortAddress(address?: string) {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
+function connectionErrorMessage(error: Error) {
+  const message = error.message || 'Wallet connection failed.';
+  if (message.toLowerCase().includes('user rejected') || message.toLowerCase().includes('user denied')) {
+    return 'Connection request was cancelled in your wallet.';
+  }
+  if (message.toLowerCase().includes('project id')) {
+    return 'WalletConnect needs a valid project ID before this wallet can connect.';
+  }
+  return message.length > 140 ? `${message.slice(0, 137)}...` : message;
+}
+
 export function WalletConnect() {
   const { address, isConnected, chain } = useAccount();
   const { data: balance } = useBalance({ address });
@@ -19,6 +30,7 @@ export function WalletConnect() {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [copied, setCopied] = useState(false);
+  const [connectionError, setConnectionError] = useState('');
 
   const wallets = useMemo(() => {
     const unique = new Map<string, (typeof connectors)[number]>();
@@ -32,8 +44,20 @@ export function WalletConnect() {
 
   const openWalletSelector = useCallback(() => {
     setSearch('');
+    setConnectionError('');
     setOpen(true);
   }, []);
+
+  const selectWallet = useCallback((connector: (typeof connectors)[number]) => {
+    setConnectionError('');
+    connect(
+      { connector },
+      {
+        onSuccess: () => setOpen(false),
+        onError: (error) => setConnectionError(connectionErrorMessage(error)),
+      },
+    );
+  }, [connect, connectors]);
 
   useEffect(() => {
     const openWallet = () => openWalletSelector();
@@ -54,8 +78,8 @@ export function WalletConnect() {
               <div className="wallet-modal-head">
                 <div>
                   <span className="wallet-modal-kicker">KYOX ACCESS</span>
-                  <h2>CONNECT TO KYOX</h2>
-                  <p>Choose your preferred wallet to enter the exchange.</p>
+                  <h2>CONNECT WALLET</h2>
+                  <p>Choose your preferred provider to proceed.</p>
                 </div>
                 <button className="modal-close" aria-label="Close wallet selector" onClick={() => setOpen(false)}><X size={18} /></button>
               </div>
@@ -63,9 +87,10 @@ export function WalletConnect() {
                 <Search size={15} />
                 <input autoFocus value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search wallets" aria-label="Search wallets" />
               </div>
+              {connectionError && <div className="wallet-error" role="alert">{connectionError}</div>}
               <div className="wallet-list">
                 {filteredWallets.map((connector) => (
-                  <button className="wallet-option" key={connector.uid} disabled={isPending} onClick={() => connect({ connector }, { onSuccess: () => setOpen(false) })}>
+                  <button className="wallet-option" key={connector.uid} disabled={isPending} onClick={() => selectWallet(connector)}>
                     <span className="wallet-option-icon">
                       {connector.icon ? (
                         // eslint-disable-next-line @next/next/no-img-element

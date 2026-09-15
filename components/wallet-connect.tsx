@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Copy, ExternalLink, LogOut, Search, Wallet, X } from 'lucide-react';
 import { useAccount, useBalance, useConnect, useDisconnect, useSwitchChain } from 'wagmi';
 import { arbitrum } from 'wagmi/chains';
@@ -32,16 +32,16 @@ export function WalletConnect() {
     wallet.name.toLowerCase().includes(search.trim().toLowerCase()),
   );
 
-  const openWalletSelector = () => {
+  const openWalletSelector = useCallback(() => {
     setSearch('');
     setOpen(true);
-  };
+  }, []);
 
   useEffect(() => {
     const openWallet = () => openWalletSelector();
     window.addEventListener('kyox:open-wallet', openWallet);
     return () => window.removeEventListener('kyox:open-wallet', openWallet);
-  }, []);
+  }, [openWalletSelector]);
 
   if (!isConnected || !address) {
     return (

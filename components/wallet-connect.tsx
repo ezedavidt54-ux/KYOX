@@ -1,9 +1,8 @@
 'use client';
 
-import { useConnectModal } from '@rainbow-me/rainbowkit';
-import { useAccount, useBalance, useDisconnect } from 'wagmi';
-import { Copy, ExternalLink, LogOut, Wallet } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { Copy, ExternalLink, LogOut, Search, Wallet, X } from 'lucide-react';
+import { useAccount, useBalance, useConnect, useDisconnect } from 'wagmi';
 
 function shortAddress(address?: string) {
   if (!address) return '';
@@ -11,18 +10,102 @@ function shortAddress(address?: string) {
 }
 
 export function WalletConnect() {
-  const { openConnectModal } = useConnectModal();
   const { address, isConnected, chain } = useAccount();
   const { data: balance } = useBalance({ address });
+  const { connect, connectors, isPending } = useConnect();
   const { disconnect } = useDisconnect();
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
   const [copied, setCopied] = useState(false);
+
+  const wallets = useMemo(() => {
+    const unique = new Map<string, (typeof connectors)[number]>();
+    for (const connector of connectors) {
+      if (!unique.has(connector.name)) unique.set(connector.name, connector);
+    }
+    return [...unique.values()];
+  }, [connectors]);
+
+  const filteredWallets = wallets.filter((wallet) =>
+    wallet.name.toLowerCase().includes(search.trim().toLowerCase()),
+  );
+
+  useEffect(() => {
+    if (!open) setSearch('');
+  }, [open]);
 
   if (!isConnected || !address) {
     return (
-      <button className="wallet-button" onClick={() => openConnectModal?.()}>
-        <span className="wallet-orbit"><Wallet size={16} /></span>
-        CONNECT WALLET
-      </button>
+      <>
+        <button className="wallet-button" onClick={() => setOpen(true)}>
+          <span className="wallet-orbit"><Wallet size={16} /></span>
+          CONNECT WALLET
+        </button>
+
+        {open && (
+          <div className="wallet-modal-backdrop" onMouseDown={() => setOpen(false)}>
+            <div className="wallet-modal" onMouseDown={(event) => event.stopPropagation()}>
+              <div className="wallet-modal-head">
+                <div>
+                  <span className="wallet-modal-kicker">KYOX ACCESS</span>
+                  <h2>CONNECT TO KYOX</h2>
+                  <p>Choose your preferred wallet to enter the exchange.</p>
+                </div>
+                <button className="modal-close" aria-label="Close wallet selector" onClick={() => setOpen(false)}>
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div className="wallet-search">
+                <Search size={15} />
+                <input
+                  autoFocus
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Search wallets"
+                  aria-label="Search wallets"
+                />
+              </div>
+
+              <div className="wallet-list">
+                {filteredWallets.map((connector) => (
+                  <button
+                    className="wallet-option"
+                    key={connector.uid}
+                    disabled={isPending}
+                    onClick={() => {
+                      connect({ connector }, { onSuccess: () => setOpen(false) });
+                    }}
+                  >
+                    <span className="wallet-option-icon">
+                      {connector.icon ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={connector.icon} alt="" />
+                      ) : (
+                        <Wallet size={20} />
+                      )}
+                    </span>
+                    <span className="wallet-option-copy">
+                      <strong>{connector.name}</strong>
+                      <small>{connector.name === 'WalletConnect' ? 'Connect any compatible mobile wallet' : 'Secure non custodial connection'}</small>
+                    </span>
+                    <span className="wallet-option-arrow">↗</span>
+                  </button>
+                ))}
+                {!filteredWallets.length && <div className="wallet-empty">No compatible wallet found.</div>}
+              </div>
+
+              <div className="wallet-modal-foot">
+                <span>SECURE CONNECTION</span>
+                <span>•</span>
+                <span>NON CUSTODIAL</span>
+                <span>•</span>
+                <span>{wallets.length} OPTIONS</span>
+              </div>
+            </div>
+          </div>
+        )}
+      </>
     );
   }
 

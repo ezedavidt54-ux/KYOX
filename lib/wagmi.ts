@@ -15,14 +15,28 @@ import {
   walletConnectWallet,
   zerionWallet,
 } from '@rainbow-me/rainbowkit/wallets';
-import { arbitrum, base, mainnet } from 'wagmi/chains';
+import { defineChain } from 'viem';
+
+export const robinhoodChain = defineChain({
+  id: 4663,
+  name: 'Robinhood Chain',
+  nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+  rpcUrls: {
+    default: { http: ['https://rpc.mainnet.chain.robinhood.com'] },
+    public: { http: ['https://rpc.mainnet.chain.robinhood.com'] },
+  },
+  blockExplorers: {
+    default: { name: 'Robinhood Blockscout', url: 'https://robinhoodchain.blockscout.com' },
+  },
+  sourceId: 1,
+});
 
 const walletConnectProjectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ?? 'KYOX_BUILD_PLACEHOLDER';
 
 export const wagmiConfig = getDefaultConfig({
   appName: 'KYOX',
   projectId: walletConnectProjectId,
-  chains: [arbitrum, base, mainnet],
+  chains: [robinhoodChain],
   wallets: [
     {
       groupName: 'Recommended',

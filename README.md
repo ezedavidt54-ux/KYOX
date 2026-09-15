@@ -9,10 +9,17 @@ KYOX is a cinematic on chain trading interface built around a dark, data driven 
 • Next.js App Router with TypeScript.
 • Tailwind CSS v4.
 • RainbowKit, wagmi and viem wallet infrastructure.
-• Arbitrum, Base and Ethereum network support.
+• Robinhood Chain mainnet as the primary network, chain ID 4663.
+• Arbitrum, Base and Ethereum remain available in the wallet configuration.
 • Custom KYOX wallet control with connection, address, balance, explorer and disconnect states.
 • Cinematic animated black hole hero.
 • Responsive command deck with market and swap surfaces.
+• Dedicated Markets, Portfolio, Activity, Liquidity and Documentation pages.
+• Robinhood Chain Uniswap V2 swap foundation for ETH/WETH and USDC routing.
+
+## Robinhood Chain
+
+Robinhood Chain uses chain ID `4663`, ETH as the native gas token, the public RPC `https://rpc.mainnet.chain.robinhood.com` and Robinhood Blockscout as its explorer.
 
 ## Wallet setup
 
@@ -27,6 +34,6 @@ npm install
 npm run dev
 ```
 
-## Important
+## Swap foundation
 
-The current swap surface is interface only. It does not execute token swaps yet. Real trading will be added only after the routing, liquidity, token addresses, approvals, slippage handling and transaction flow are implemented and tested on chain.
+KYOX currently targets Robinhood Chain's deployed Uniswap V2 Router02 for the existing exact input ETH/USDC swap interface. Quotes, approvals, slippage protection and receipt confirmation are wired in the client, but the swap path still requires full live on chain validation with real Robinhood Chain liquidity before it should be treated as production ready.

@@ -49,10 +49,17 @@ export async function POST(request: Request) {
       decisionId = decision.id;
     }
 
+    let agentId: string | undefined;
+    if (typeof body.agentId === 'string') {
+      const agent = await prisma.tradingAgent.findFirst({ where: { id: body.agentId, userId: session.user.id }, select: { id: true } });
+      if (!agent) return NextResponse.json({ error: 'Trading intelligence agent not found.' }, { status: 404 });
+      agentId = agent.id;
+    }
+
     const trade = await prisma.trade.create({
       data: {
         userId: session.user.id,
-        agentId: typeof body.agentId === 'string' ? body.agentId : undefined,
+        agentId,
         decisionId,
         source: source as 'MANUAL' | 'IMPORTED' | 'AGENT',
         chainId,

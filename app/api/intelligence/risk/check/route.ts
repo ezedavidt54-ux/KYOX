@@ -3,6 +3,19 @@ import { getCurrentSession } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { checkDecisionRisk } from '@/lib/intelligence/risk';
 
+export async function GET() {
+  const session = await getCurrentSession();
+  if (!session) return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
+
+  const logs = await prisma.riskDecisionLog.findMany({
+    where: { userId: session.user.id },
+    orderBy: { createdAt: 'desc' },
+    take: 100,
+  });
+
+  return NextResponse.json({ logs });
+}
+
 export async function POST(request: Request) {
   const session = await getCurrentSession();
   if (!session) return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });

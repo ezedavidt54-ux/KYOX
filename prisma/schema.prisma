@@ -121,6 +121,7 @@ model TradingAgent {
   confidenceFloor   Float     @default(0.70)
   maxRiskPerTrade   Float     @default(0.005)
   maxDailyLoss      Float     @default(0.02)
+  riskCapital       Float?
   allowedAssets     String[]  @default([])
   allowedProtocols  String[]  @default([])
   memorySummary     String?

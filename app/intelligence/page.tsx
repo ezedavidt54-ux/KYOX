@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { IntelligenceAuth } from "@/components/intelligence-auth";
 
 const stages = [
   ["01", "Observe", "KYOX watches the trader's analysis and decisions without executing."],
@@ -16,6 +17,7 @@ export default function IntelligencePage() {
         <h1 style={{ fontSize: "clamp(42px, 8vw, 88px)", lineHeight: 0.95, margin: "18px 0" }}>
           BUILD YOUR<br />TRADING INTELLIGENCE.
         </h1>
+        <div style={{ marginTop: 28 }}><IntelligenceAuth /></div>
         <p style={{ maxWidth: 650, opacity: 0.7, lineHeight: 1.8 }}>
           KYOX will learn how each trader analyses, decides, manages and executes.
           Every user gets an independent intelligence, memory and risk profile.

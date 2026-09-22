@@ -8,6 +8,8 @@ export type RiskDecisionInput = {
   proposedRisk?: number;
   maxRiskPerTrade: number;
   maxDailyLoss: number;
+  riskCapital?: number | null;
+  realizedDailyLoss: number;
   allowedAssets: string[];
   allowedProtocols: string[];
   protocol?: string;
@@ -19,12 +21,17 @@ export type RiskCheckResult = {
   limits: {
     maxRiskPerTrade: number;
     maxDailyLoss: number;
+    riskCapital: number | null;
+    dailyLossLimit: number | null;
+    realizedDailyLoss: number;
+    projectedDailyLoss: number | null;
   };
 };
 
 export function checkDecisionRisk(input: RiskDecisionInput): RiskCheckResult {
   const reasons: string[] = [];
   const asset = input.asset.trim().toUpperCase();
+  const isTradeAction = input.action === "BUY" || input.action === "SELL";
 
   if (!input.enabled) reasons.push("Agent is disabled.");
   if (input.mode === "PAUSED") reasons.push("Agent is paused.");
@@ -50,6 +57,8 @@ export function checkDecisionRisk(input: RiskDecisionInput): RiskCheckResult {
     } else if (input.proposedRisk > input.maxRiskPerTrade) {
       reasons.push("Proposed risk exceeds the agent per trade risk limit.");
     }
+  } else if (isTradeAction) {
+    reasons.push("proposedRisk is required for a trade authorization check.");
   }
   if (input.allowedAssets.length > 0 && !input.allowedAssets.map((x) => x.toUpperCase()).includes(asset)) {
     reasons.push("Asset is not in the agent allowlist.");
@@ -61,12 +70,47 @@ export function checkDecisionRisk(input: RiskDecisionInput): RiskCheckResult {
     reasons.push("maxDailyLoss must be a nonnegative ratio.");
   }
 
+  const hasValidRiskCapital =
+    input.riskCapital !== null &&
+    input.riskCapital !== undefined &&
+    Number.isFinite(input.riskCapital) &&
+    input.riskCapital > 0;
+
+  const dailyLossLimit = hasValidRiskCapital
+    ? (input.riskCapital as number) * input.maxDailyLoss
+    : null;
+
+  if (input.maxDailyLoss > 0 && !hasValidRiskCapital) {
+    reasons.push("Risk capital must be configured before enforcing a percentage daily loss limit.");
+  }
+
+  if (!Number.isFinite(input.realizedDailyLoss) || input.realizedDailyLoss < 0) {
+    reasons.push("realizedDailyLoss must be a nonnegative amount.");
+  }
+
+  const proposedLoss = input.proposedRisk !== undefined && hasValidRiskCapital
+    ? input.proposedRisk * (input.riskCapital as number)
+    : 0;
+  const projectedDailyLoss = dailyLossLimit === null
+    ? null
+    : input.realizedDailyLoss + proposedLoss;
+
+  if (dailyLossLimit !== null && input.realizedDailyLoss >= dailyLossLimit) {
+    reasons.push("Daily loss limit has already been reached.");
+  } else if (dailyLossLimit !== null && projectedDailyLoss !== null && projectedDailyLoss > dailyLossLimit) {
+    reasons.push("This trade would exceed the agent daily loss limit.");
+  }
+
   return {
     allowed: reasons.length === 0,
     reasons,
     limits: {
       maxRiskPerTrade: input.maxRiskPerTrade,
       maxDailyLoss: input.maxDailyLoss,
+      riskCapital: hasValidRiskCapital ? (input.riskCapital as number) : null,
+      dailyLossLimit,
+      realizedDailyLoss: input.realizedDailyLoss,
+      projectedDailyLoss,
     },
   };
 }

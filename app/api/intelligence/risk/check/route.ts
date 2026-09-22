@@ -18,6 +18,24 @@ export async function POST(request: Request) {
 
   if (!agent) return NextResponse.json({ error: 'Trading agent not found.' }, { status: 404 });
 
+  const startOfUtcDay = new Date();
+  startOfUtcDay.setUTCHours(0, 0, 0, 0);
+
+  const realizedLossAggregate = await prisma.trade.aggregate({
+    _sum: { pnl: true },
+    where: {
+      agentId: agent.id,
+      closedAt: { gte: startOfUtcDay },
+      pnl: { lt: 0 },
+    },
+  });
+
+  const realizedDailyLoss = Math.max(0, -(realizedLossAggregate._sum.pnl ?? 0));
+  const proposedRisk =
+    body.proposedRisk === undefined || body.proposedRisk === null
+      ? undefined
+      : Number(body.proposedRisk);
+
   const result = checkDecisionRisk({
     mode: agent.mode,
     enabled: agent.enabled,
@@ -25,9 +43,11 @@ export async function POST(request: Request) {
     asset: body.asset,
     confidence: Number(body.confidence),
     confidenceFloor: agent.confidenceFloor,
-    proposedRisk: body.proposedRisk === undefined ? undefined : Number(body.proposedRisk),
+    proposedRisk,
     maxRiskPerTrade: agent.maxRiskPerTrade,
     maxDailyLoss: agent.maxDailyLoss,
+    riskCapital: agent.riskCapital,
+    realizedDailyLoss,
     allowedAssets: agent.allowedAssets,
     allowedProtocols: agent.allowedProtocols,
     protocol: typeof body.protocol === 'string' ? body.protocol : undefined,

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getCurrentSession } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { getModePolicy, type IntelligenceMode } from '@/lib/intelligence/mode';
 
 const actions = new Set(['BUY', 'SELL', 'HOLD', 'WAIT', 'REJECT']);
 const statuses = new Set(['PROPOSED', 'APPROVED', 'REJECTED', 'EXECUTED', 'EXPIRED']);
@@ -60,6 +61,18 @@ export async function POST(request: Request) {
 
     const agent = await resolveAgent(session.user.id, body.agentId);
     if (!agent) return NextResponse.json({ error: 'Trading intelligence agent not found.' }, { status: 404 });
+
+    const mode = agent.mode as IntelligenceMode;
+    const policy = getModePolicy(mode);
+    if (!policy.canPropose) {
+      return NextResponse.json({ error: `Decision proposals are disabled in ${mode} mode.` }, { status: 422 });
+    }
+    if (status === 'EXECUTED') {
+      return NextResponse.json({ error: 'Executed decisions must be created by a recorded trade outcome.' }, { status: 422 });
+    }
+    if (status === 'APPROVED' && !policy.canExecute && mode !== 'PAPER') {
+      return NextResponse.json({ error: `Live approval is disabled in ${mode} mode.` }, { status: 422 });
+    }
 
     const decision = await prisma.tradeDecision.create({
       data: {

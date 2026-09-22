@@ -1,7 +1,5 @@
-import type { AgentMode } from '@/app/generated/prisma/client';
-
 type LearningInput = {
-  mode: AgentMode;
+  mode: string;
   profile: {
     markets: string[];
     timeframes: string[];

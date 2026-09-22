@@ -3,7 +3,7 @@ import { getCurrentSession } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { buildAgentDecision } from '@/lib/intelligence/decision';
 import { getModePolicy } from '@/lib/intelligence/mode';
-import type { AgentDecision } from '@/lib/intelligence/types';
+import type { AgentDecision, TradingDNA } from '@/lib/intelligence/types';
 
 function numberOrUndefined(value: unknown) {
   if (value === undefined || value === null || value === '') return undefined;
@@ -18,6 +18,21 @@ function parseMemory(value: string | null) {
   } catch {
     return null;
   }
+}
+
+function toTradingDNA(profile: Awaited<ReturnType<typeof prisma.tradingProfile.findUnique>>): TradingDNA | null {
+  if (!profile) return null;
+  return {
+    markets: profile.markets,
+    timeframes: profile.timeframes,
+    biasMethod: profile.biasMethod ?? undefined,
+    entryMethod: profile.entryMethod ?? undefined,
+    riskRules: profile.riskRules && typeof profile.riskRules === 'object' ? profile.riskRules as Record<string, unknown> : undefined,
+    managementRules: profile.managementRules && typeof profile.managementRules === 'object' ? profile.managementRules as Record<string, unknown> : undefined,
+    invalidationRules: profile.invalidationRules && typeof profile.invalidationRules === 'object' ? profile.invalidationRules as Record<string, unknown> : undefined,
+    newsRules: profile.newsRules && typeof profile.newsRules === 'object' ? profile.newsRules as Record<string, unknown> : undefined,
+    notes: profile.notes ?? undefined,
+  };
 }
 
 export async function POST(request: Request) {
@@ -61,7 +76,7 @@ export async function POST(request: Request) {
 
   const decision = buildAgentDecision({
     mode: agent.mode,
-    profile,
+    profile: toTradingDNA(profile),
     memory: parseMemory(agent.memorySummary),
     asset: body.asset,
     timeframe: typeof body.timeframe === 'string' ? body.timeframe : latestObservation?.timeframe,

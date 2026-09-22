@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { getCurrentSession } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import IntelligenceLearning from '@/components/intelligence-learning';
+import IntelligenceAnalytics from '@/components/intelligence-analytics';
 
 export default async function IntelligenceDashboard() {
   const session = await getCurrentSession();
@@ -49,6 +50,7 @@ export default async function IntelligenceDashboard() {
             {['Observe decisions', 'Learn patterns', 'Propose in Shadow', 'Paper test', 'Autonomous with limits'].map((item, i) => <div key={item} style={{ padding: 15, border: '1px solid rgba(255,255,255,.07)', borderRadius: 10, opacity: i === 0 ? 1 : .42 }}><span style={{ font: '10px DM Mono, monospace' }}>0{i + 1}</span><div style={{ marginTop: 8, fontSize: 12 }}>{item}</div></div>)}
           </div>
         </section>
+        <IntelligenceAnalytics />
         <IntelligenceLearning
           initialDecisions={decisions.map(x => ({ ...x, decidedAt: x.decidedAt.toISOString() }))}
           initialObservations={observations.map(x => ({ ...x, observedAt: x.observedAt.toISOString() }))}

@@ -4,6 +4,7 @@ export type RiskDecisionInput = {
   action: "BUY" | "SELL" | "HOLD" | "WAIT" | "REJECT";
   asset: string;
   confidence: number;
+  confidenceFloor: number;
   proposedRisk?: number;
   maxRiskPerTrade: number;
   maxDailyLoss: number;
@@ -34,6 +35,11 @@ export function checkDecisionRisk(input: RiskDecisionInput): RiskCheckResult {
   if (!asset) reasons.push("Asset is required.");
   if (!Number.isFinite(input.confidence) || input.confidence < 0 || input.confidence > 1) {
     reasons.push("Confidence must be between 0 and 1.");
+  }
+  if (!Number.isFinite(input.confidenceFloor) || input.confidenceFloor < 0 || input.confidenceFloor > 1) {
+    reasons.push("confidenceFloor must be between 0 and 1.");
+  } else if (Number.isFinite(input.confidence) && input.confidence < input.confidenceFloor) {
+    reasons.push("Confidence is below the agent confidence floor.");
   }
   if (!Number.isFinite(input.maxRiskPerTrade) || input.maxRiskPerTrade < 0) {
     reasons.push("maxRiskPerTrade must be a nonnegative ratio.");

@@ -1,3 +1,5 @@
+import { redirect } from 'next/navigation';
+import { getCurrentSession } from '@/lib/auth';
 import Link from "next/link";
 import { IntelligenceAuth } from "@/components/intelligence-auth";
 
@@ -8,7 +10,9 @@ const stages = [
   ["04", "Autonomous", "The intelligence can execute within the user's explicit risk and protocol limits."],
 ];
 
-export default function IntelligencePage() {
+export default async function IntelligencePage() {
+  const session = await getCurrentSession();
+  if (session) redirect('/intelligence/dashboard');
   return (
     <main style={{ minHeight: "100vh", padding: "48px 5vw" }}>
       <Link href="/" style={{ opacity: 0.65 }}>← KYOX</Link>

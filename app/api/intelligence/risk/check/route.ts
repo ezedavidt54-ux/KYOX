@@ -53,5 +53,33 @@ export async function POST(request: Request) {
     protocol: typeof body.protocol === 'string' ? body.protocol : undefined,
   });
 
+  try {
+    await prisma.riskDecisionLog.create({
+      data: {
+        userId: session.user.id,
+        agentId: agent.id,
+        mode: agent.mode,
+        action: body.action,
+        asset: body.asset.trim().toUpperCase(),
+        protocol: typeof body.protocol === 'string' ? body.protocol : undefined,
+        confidence: Number.isFinite(Number(body.confidence)) ? Number(body.confidence) : undefined,
+        proposedRisk,
+        allowed: result.allowed,
+        reasons: result.reasons,
+        maxRiskPerTrade: result.limits.maxRiskPerTrade,
+        maxDailyLoss: result.limits.maxDailyLoss,
+        riskCapital: result.limits.riskCapital,
+        dailyLossLimit: result.limits.dailyLossLimit,
+        realizedDailyLoss: result.limits.realizedDailyLoss,
+        projectedDailyLoss: result.limits.projectedDailyLoss,
+      },
+    });
+  } catch {
+    return NextResponse.json(
+      { error: 'Risk decision could not be recorded. Authorization was not returned.' },
+      { status: 500 },
+    );
+  }
+
   return NextResponse.json(result, { status: result.allowed ? 200 : 422 });
 }

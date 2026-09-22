@@ -49,6 +49,7 @@ model User {
   decisions      TradeDecision[]
   observations   AgentObservation[]
   feedback       AgentFeedback[]
+  sessions       Session[]
 }
 
 model Wallet {
@@ -64,6 +65,31 @@ model Wallet {
 
   @@unique([address, chainId])
   @@index([userId])
+}
+
+model AuthNonce {
+  id        String   @id @default(cuid())
+  nonce     String   @unique
+  address   String
+  chainId   Int
+  message   String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([address, chainId])
+  @@index([expiresAt])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 model TradingProfile {
@@ -101,7 +127,7 @@ model TradingAgent {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
   decisions         TradeDecision[]
-  observations     AgentObservation[]
+  observations      AgentObservation[]
   feedback          AgentFeedback[]
   trades            Trade[]
 
@@ -109,11 +135,11 @@ model TradingAgent {
 }
 
 model Trade {
-  id              String      @id @default(cuid())
+  id              String         @id @default(cuid())
   userId          String
-  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   agentId         String?
-  agent            TradingAgent? @relation(fields: [agentId], references: [id], onDelete: SetNull)
+  agent            TradingAgent?  @relation(fields: [agentId], references: [id], onDelete: SetNull)
   source          TradeSource
   chainId         Int
   asset           String
@@ -128,7 +154,7 @@ model Trade {
   openedAt        DateTime?
   closedAt        DateTime?
   metadata        Json?
-  createdAt       DateTime    @default(now())
+  createdAt       DateTime       @default(now())
 
   @@index([userId, createdAt])
   @@index([agentId, createdAt])
@@ -162,7 +188,7 @@ model AgentObservation {
   id             String       @id @default(cuid())
   userId         String
   user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  agentId        String
+  agentId         String
   agent          TradingAgent @relation(fields: [agentId], references: [id], onDelete: Cascade)
   asset          String
   timeframe      String?
@@ -176,16 +202,16 @@ model AgentObservation {
 }
 
 model AgentFeedback {
-  id         String       @id @default(cuid())
-  userId     String
-  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  agentId    String
-  agent      TradingAgent @relation(fields: [agentId], references: [id], onDelete: Cascade)
-  decisionId String?
-  rating     Int?
-  correction String?
-  metadata   Json?
-  createdAt  DateTime     @default(now())
+  id          String       @id @default(cuid())
+  userId      String
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agentId     String
+  agent       TradingAgent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  decisionId  String?
+  rating      Int?
+  correction  String?
+  metadata    Json?
+  createdAt   DateTime     @default(now())
 
   @@index([agentId, createdAt])
 }

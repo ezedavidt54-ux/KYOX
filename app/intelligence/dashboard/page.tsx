@@ -4,6 +4,7 @@ import { getCurrentSession } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import IntelligenceLearning from '@/components/intelligence-learning';
 import IntelligenceAnalytics from '@/components/intelligence-analytics';
+import IntelligenceLearningPass from '@/components/intelligence-learning-pass';
 
 export default async function IntelligenceDashboard() {
   const session = await getCurrentSession();
@@ -51,6 +52,7 @@ export default async function IntelligenceDashboard() {
           </div>
         </section>
         <IntelligenceAnalytics />
+        {agent && <IntelligenceLearningPass systemVersion={agent.systemVersion} memorySummary={agent.memorySummary} />}
         <IntelligenceLearning
           initialDecisions={decisions.map(x => ({ ...x, decidedAt: x.decidedAt.toISOString() }))}
           initialObservations={observations.map(x => ({ ...x, observedAt: x.observedAt.toISOString() }))}

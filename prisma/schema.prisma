@@ -154,6 +154,8 @@ model Trade {
   openedAt        DateTime?
   closedAt        DateTime?
   metadata        Json?
+  decisionId      String?        @unique
+  decision        TradeDecision? @relation(fields: [decisionId], references: [id], onDelete: SetNull)
   createdAt       DateTime       @default(now())
 
   @@index([userId, createdAt])

@@ -103,6 +103,7 @@ model TradingAgent {
   decisions         TradeDecision[]
   observations     AgentObservation[]
   feedback          AgentFeedback[]
+  trades            Trade[]
 
   @@index([userId])
 }

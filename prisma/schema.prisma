@@ -50,6 +50,7 @@ model User {
   observations   AgentObservation[]
   feedback       AgentFeedback[]
   sessions       Session[]
+  riskLogs       RiskDecisionLog[]
 }
 
 model Wallet {

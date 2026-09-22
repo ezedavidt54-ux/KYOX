@@ -24,6 +24,7 @@ export async function POST(request: Request) {
     action: body.action,
     asset: body.asset,
     confidence: Number(body.confidence),
+    confidenceFloor: agent.confidenceFloor,
     proposedRisk: body.proposedRisk === undefined ? undefined : Number(body.proposedRisk),
     maxRiskPerTrade: agent.maxRiskPerTrade,
     maxDailyLoss: agent.maxDailyLoss,

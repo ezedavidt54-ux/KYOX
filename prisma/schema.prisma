@@ -131,8 +131,36 @@ model TradingAgent {
   observations      AgentObservation[]
   feedback          AgentFeedback[]
   trades            Trade[]
+  riskLogs          RiskDecisionLog[]
 
   @@index([userId])
+}
+
+model RiskDecisionLog {
+  id                  String    @id @default(cuid())
+  userId              String
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agentId             String
+  agent               TradingAgent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  mode                AgentMode
+  action              DecisionAction
+  asset               String
+  protocol            String?
+  confidence          Float?
+  proposedRisk        Float?
+  allowed             Boolean
+  reasons             String[]
+  maxRiskPerTrade     Float
+  maxDailyLoss        Float
+  riskCapital         Float?
+  dailyLossLimit      Float?
+  realizedDailyLoss   Float
+  projectedDailyLoss  Float?
+  createdAt           DateTime @default(now())
+
+  @@index([agentId, createdAt])
+  @@index([userId, createdAt])
+  @@index([allowed, createdAt])
 }
 
 model Trade {

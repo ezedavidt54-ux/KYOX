@@ -179,6 +179,7 @@ model TradeDecision {
   reasoning      Json?
   decidedAt      DateTime       @default(now())
   expiresAt      DateTime?
+  trade          Trade?
 
   @@index([agentId, decidedAt])
   @@index([userId, decidedAt])

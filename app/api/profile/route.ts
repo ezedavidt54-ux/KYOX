@@ -1,66 +1,77 @@
-import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { NextResponse } from 'next/server';
+import { getCurrentSession } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
 
-function normalizeAddress(address: unknown) {
-  if (typeof address !== "string") return null;
-  const value = address.trim().toLowerCase();
-  return /^0x[a-f0-9]{40}$/.test(value) ? value : null;
+export async function GET() {
+  const session = await getCurrentSession();
+
+  if (!session) {
+    return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
+  }
+
+  return NextResponse.json({ user: session.user });
 }
 
-export async function POST(request: Request) {
+export async function PATCH(request: Request) {
+  const session = await getCurrentSession();
+
+  if (!session) {
+    return NextResponse.json({ error: 'Authentication required.' }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
-    const address = normalizeAddress(body.address);
-    const chainId = Number(body.chainId);
+    const displayName =
+      typeof body.displayName === 'string' ? body.displayName.trim().slice(0, 80) : undefined;
 
-    if (!address || !Number.isInteger(chainId) || chainId <= 0) {
-      return NextResponse.json(
-        { error: "A valid wallet address and chainId are required." },
-        { status: 400 },
-      );
-    }
+    const profile = body.tradingProfile;
 
-    const wallet = await prisma.wallet.findUnique({
-      where: { address_chainId: { address, chainId } },
-      include: { user: { include: { tradingProfile: true, agents: true } } },
-    });
-
-    if (wallet) {
-      return NextResponse.json({ user: wallet.user });
-    }
-
-    const user = await prisma.user.create({
+    const user = await prisma.user.update({
+      where: { id: session.user.id },
       data: {
-        wallets: {
-          create: { address, chainId, isPrimary: true },
-        },
-        tradingProfile: {
-          create: {
-            markets: [],
-            timeframes: [],
-            riskRules: {},
-            managementRules: {},
-            invalidationRules: {},
-            newsRules: {},
-          },
-        },
-        agents: {
-          create: {
-            name: "My KYOX Intelligence",
-            allowedAssets: [],
-            allowedProtocols: [],
-          },
-        },
+        ...(displayName !== undefined ? { displayName: displayName || null } : {}),
+        ...(profile
+          ? {
+              tradingProfile: {
+                upsert: {
+                  create: {
+                    markets: Array.isArray(profile.markets) ? profile.markets : [],
+                    timeframes: Array.isArray(profile.timeframes) ? profile.timeframes : [],
+                    biasMethod: typeof profile.biasMethod === 'string' ? profile.biasMethod : null,
+                    entryMethod: typeof profile.entryMethod === 'string' ? profile.entryMethod : null,
+                    riskRules: profile.riskRules ?? null,
+                    managementRules: profile.managementRules ?? null,
+                    invalidationRules: profile.invalidationRules ?? null,
+                    newsRules: profile.newsRules ?? null,
+                    notes: typeof profile.notes === 'string' ? profile.notes : null,
+                  },
+                  update: {
+                    markets: Array.isArray(profile.markets) ? profile.markets : undefined,
+                    timeframes: Array.isArray(profile.timeframes) ? profile.timeframes : undefined,
+                    biasMethod: typeof profile.biasMethod === 'string' ? profile.biasMethod : undefined,
+                    entryMethod: typeof profile.entryMethod === 'string' ? profile.entryMethod : undefined,
+                    riskRules: profile.riskRules ?? undefined,
+                    managementRules: profile.managementRules ?? undefined,
+                    invalidationRules: profile.invalidationRules ?? undefined,
+                    newsRules: profile.newsRules ?? undefined,
+                    notes: typeof profile.notes === 'string' ? profile.notes : undefined,
+                    version: { increment: 1 },
+                  },
+                },
+              },
+            }
+          : {}),
       },
-      include: { tradingProfile: true, agents: true },
+      include: {
+        wallets: true,
+        tradingProfile: true,
+        agents: true,
+      },
     });
 
-    return NextResponse.json({ user }, { status: 201 });
+    return NextResponse.json({ user });
   } catch (error) {
-    console.error("KYOX profile creation failed:", error);
-    return NextResponse.json(
-      { error: "Unable to create or load the KYOX profile." },
-      { status: 500 },
-    );
+    console.error('KYOX profile update failed:', error);
+    return NextResponse.json({ error: 'Unable to update the KYOX profile.' }, { status: 500 });
   }
 }

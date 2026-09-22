@@ -10,7 +10,7 @@ export type ModePolicy = {
 const POLICIES: Record<IntelligenceMode, ModePolicy> = {
   OBSERVE: {
     canObserve: true,
-    canPropose: true,
+    canPropose: false,
     canPaperTrade: false,
     canExecute: false,
   },

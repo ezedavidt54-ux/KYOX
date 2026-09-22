@@ -3,8 +3,10 @@
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useAccount, useChainId, useSignMessage } from 'wagmi';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export function IntelligenceAuth() {
+  const router = useRouter();
   const { address, isConnected } = useAccount();
   const chainId = useChainId();
   const { signMessageAsync } = useSignMessage();
@@ -44,6 +46,8 @@ export function IntelligenceAuth() {
       }
 
       setStatus('ready');
+      router.push('/intelligence/onboarding');
+      router.refresh();
     } catch (error) {
       console.error('KYOX authentication failed', error);
       setStatus('error');

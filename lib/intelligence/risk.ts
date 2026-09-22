@@ -1,5 +1,7 @@
+import { getModePolicy, type IntelligenceMode, type ModePolicy } from '@/lib/intelligence/mode';
+
 export type RiskDecisionInput = {
-  mode: "OBSERVE" | "SHADOW" | "PAPER" | "AUTONOMOUS" | "PAUSED";
+  mode: IntelligenceMode;
   enabled: boolean;
   action: "BUY" | "SELL" | "HOLD" | "WAIT" | "REJECT";
   asset: string;
@@ -18,6 +20,7 @@ export type RiskDecisionInput = {
 export type RiskCheckResult = {
   allowed: boolean;
   reasons: string[];
+  mode: ModePolicy;
   limits: {
     maxRiskPerTrade: number;
     maxDailyLoss: number;
@@ -32,10 +35,12 @@ export function checkDecisionRisk(input: RiskDecisionInput): RiskCheckResult {
   const reasons: string[] = [];
   const asset = input.asset.trim().toUpperCase();
   const isTradeAction = input.action === "BUY" || input.action === "SELL";
+  const mode = getModePolicy(input.mode);
 
   if (!input.enabled) reasons.push("Agent is disabled.");
   if (input.mode === "PAUSED") reasons.push("Agent is paused.");
   if (input.mode === "OBSERVE") reasons.push("Observe mode cannot authorize a proposed trade.");
+  if (isTradeAction && !mode.canExecute) reasons.push("Current mode cannot authorize live trade execution.");
   if (input.action === "HOLD" || input.action === "WAIT" || input.action === "REJECT") {
     reasons.push("Decision action does not authorize trade execution.");
   }
@@ -88,9 +93,10 @@ export function checkDecisionRisk(input: RiskDecisionInput): RiskCheckResult {
     reasons.push("realizedDailyLoss must be a nonnegative amount.");
   }
 
-  const proposedLoss = input.proposedRisk !== undefined && hasValidRiskCapital
-    ? input.proposedRisk * (input.riskCapital as number)
-    : 0;
+  const proposedLoss =
+    input.proposedRisk !== undefined && hasValidRiskCapital
+      ? input.proposedRisk * (input.riskCapital as number)
+      : 0;
   const projectedDailyLoss = dailyLossLimit === null
     ? null
     : input.realizedDailyLoss + proposedLoss;
@@ -104,6 +110,7 @@ export function checkDecisionRisk(input: RiskDecisionInput): RiskCheckResult {
   return {
     allowed: reasons.length === 0,
     reasons,
+    mode,
     limits: {
       maxRiskPerTrade: input.maxRiskPerTrade,
       maxDailyLoss: input.maxDailyLoss,

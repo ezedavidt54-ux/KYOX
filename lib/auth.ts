@@ -98,33 +98,51 @@ export async function verifyAuthChallenge(
 
   await prisma.authNonce.delete({ where: { id: challenge.id } });
 
-  const user = await prisma.user.upsert({
+  const existingWallet = await prisma.wallet.findUnique({
     where: {
-      wallets: {
+      address_chainId: {
         address: normalizedAddress,
         chainId,
       },
     },
-    update: {},
-    create: {
-      wallets: {
-        create: {
-          address: normalizedAddress,
-          chainId,
-          isPrimary: true,
+    select: { userId: true },
+  });
+
+  let userId = existingWallet?.userId;
+
+  if (!userId) {
+    const createdUser = await prisma.user.create({
+      data: {
+        wallets: {
+          create: {
+            address: normalizedAddress,
+            chainId,
+            isPrimary: true,
+          },
+        },
+        tradingProfile: {
+          create: {},
+        },
+        agents: {
+          create: {
+            name: 'My KYOX Intelligence',
+            mode: 'OBSERVE',
+            enabled: false,
+          },
         },
       },
-      tradingProfile: {
-        create: {},
-      },
-      agents: {
-        create: {
-          name: 'My KYOX Intelligence',
-          mode: 'OBSERVE',
-          enabled: false,
-        },
-      },
-    },
+      select: { id: true },
+    });
+    userId = createdUser.id;
+  }
+
+  await prisma.wallet.updateMany({
+    where: { userId, address: normalizedAddress, chainId },
+    data: { updatedAt: new Date() },
+  });
+
+  const user = await prisma.user.findUniqueOrThrow({
+    where: { id: userId },
     include: {
       wallets: true,
       tradingProfile: true,

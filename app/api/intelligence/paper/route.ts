@@ -76,7 +76,7 @@ export async function POST(request: Request) {
         action: decision.action,
         asset: decision.asset,
         confidence: decision.confidence,
-        proposedRisk: decision.proposedRisk,
+        proposedRisk: decision.proposedRisk ?? undefined,
         allowed: riskResult.allowed,
         reasons: riskResult.reasons,
         maxRiskPerTrade: decision.agent.maxRiskPerTrade,

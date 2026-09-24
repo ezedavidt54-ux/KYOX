@@ -3,6 +3,7 @@ import { getCurrentSession } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { buildAgentDecision } from '@/lib/intelligence/decision';
 import { getModePolicy } from '@/lib/intelligence/mode';
+import { checkDecisionRisk } from '@/lib/intelligence/risk';
 import type { AgentDecision, TradingDNA } from '@/lib/intelligence/types';
 
 function numberOrUndefined(value: unknown) {
@@ -97,6 +98,35 @@ export async function POST(request: Request) {
     risk: numberOrUndefined(body.risk),
   });
 
+  const startOfUtcDay = new Date();
+  startOfUtcDay.setUTCHours(0, 0, 0, 0);
+
+  const realizedLossAggregate = await prisma.trade.aggregate({
+    _sum: { pnl: true },
+    where: {
+      agentId: agent.id,
+      closedAt: { gte: startOfUtcDay },
+      pnl: { lt: 0 },
+    },
+  });
+
+  const realizedDailyLoss = Math.max(0, -(realizedLossAggregate._sum.pnl ?? 0));
+  const riskResult = checkDecisionRisk({
+    mode: agent.mode,
+    enabled: agent.enabled,
+    action: decision.action,
+    asset: decision.asset,
+    confidence: decision.confidence,
+    confidenceFloor: agent.confidenceFloor,
+    proposedRisk: decision.proposedRisk,
+    maxRiskPerTrade: agent.maxRiskPerTrade,
+    maxDailyLoss: agent.maxDailyLoss,
+    riskCapital: agent.riskCapital,
+    realizedDailyLoss,
+    allowedAssets: agent.allowedAssets,
+    allowedProtocols: agent.allowedProtocols,
+  });
+
   const created = await prisma.tradeDecision.create({
     data: {
       userId: session.user.id,
@@ -119,12 +149,44 @@ export async function POST(request: Request) {
         mode: agent.mode,
         sourceObservationId: latestObservation?.id ?? null,
         memoryVersion: parseMemory(agent.memorySummary)?.version ?? null,
+        risk: {
+          allowed: riskResult.allowed,
+          reasons: riskResult.reasons,
+        },
       },
     },
   });
 
+  try {
+    await prisma.riskDecisionLog.create({
+      data: {
+        userId: session.user.id,
+        agentId: agent.id,
+        mode: agent.mode,
+        action: decision.action,
+        asset: decision.asset.trim().toUpperCase(),
+        confidence: decision.confidence,
+        proposedRisk: decision.proposedRisk,
+        allowed: riskResult.allowed,
+        reasons: riskResult.reasons,
+        maxRiskPerTrade: riskResult.limits.maxRiskPerTrade,
+        maxDailyLoss: riskResult.limits.maxDailyLoss,
+        riskCapital: riskResult.limits.riskCapital,
+        dailyLossLimit: riskResult.limits.dailyLossLimit,
+        realizedDailyLoss: riskResult.limits.realizedDailyLoss,
+        projectedDailyLoss: riskResult.limits.projectedDailyLoss,
+      },
+    });
+  } catch {
+    return NextResponse.json(
+      { error: 'Risk decision could not be recorded. The proposal was not returned.' },
+      { status: 500 },
+    );
+  }
+
   return NextResponse.json({
     decision: created,
+    risk: riskResult,
     execution: {
       allowed: false,
       reason: 'Decision proposal created. No trade execution or wallet signing occurs in this layer.',

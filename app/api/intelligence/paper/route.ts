@@ -76,7 +76,7 @@ export async function POST(request: Request) {
         action: decision.action,
         asset: decision.asset,
         confidence: decision.confidence,
-        proposedRisk: decision.proposedRisk ?? undefined,
+        ...(decision.proposedRisk !== null ? { proposedRisk: decision.proposedRisk } : {}),
         allowed: riskResult.allowed,
         reasons: riskResult.reasons,
         maxRiskPerTrade: decision.agent.maxRiskPerTrade,
@@ -84,7 +84,9 @@ export async function POST(request: Request) {
         riskCapital: decision.agent.riskCapital,
         dailyLossLimit: riskResult.limits.dailyLossLimit,
         realizedDailyLoss,
-        projectedDailyLoss: riskResult.limits.projectedDailyLoss ?? undefined,
+        ...(riskResult.limits.projectedDailyLoss !== null
+          ? { projectedDailyLoss: riskResult.limits.projectedDailyLoss }
+          : {}),
       },
     });
 

@@ -94,52 +94,56 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Paper execution blocked by risk gate.', risk: riskResult }, { status: 422 });
     }
 
-    const trade = await prisma.trade.create({
-      data: {
-        userId: session.user.id,
-        agentId: decision.agent.id,
-        decisionId: decision.id,
-        source: 'AGENT',
-        chainId: 0,
-        asset: decision.asset,
-        side: decision.action as 'BUY' | 'SELL',
-        entryPrice,
-        quantity,
-        stopLoss: decision.proposedStop ?? undefined,
-        takeProfit: decision.proposedTarget ?? undefined,
-        riskAmount: decision.proposedRisk ?? undefined,
-        openedAt: new Date(),
-        metadata: {
-          executionMode: 'PAPER',
-          simulated: true,
-          engine: 'deterministic-paper-1',
-          noWalletSigning: true,
-          noOnchainTransaction: true,
-        },
-      },
-      include: { decision: true },
-    });
-
-    await prisma.tradeDecision.update({
-      where: { id: decision.id },
-      data: {
-        status: 'EXECUTED',
-        reasoning: {
-          ...(decision.reasoning && typeof decision.reasoning === 'object' && !Array.isArray(decision.reasoning)
-            ? decision.reasoning
-            : {}),
-          paperExecution: {
-            engine: 'deterministic-paper-1',
-            entryPrice,
-            quantity,
+    const result = await prisma.$transaction(async (tx) => {
+      const trade = await tx.trade.create({
+        data: {
+          userId: session.user.id,
+          agentId: decision.agent.id,
+          decisionId: decision.id,
+          source: 'AGENT',
+          chainId: 0,
+          asset: decision.asset,
+          side: decision.action as 'BUY' | 'SELL',
+          entryPrice,
+          quantity,
+          stopLoss: decision.proposedStop ?? undefined,
+          takeProfit: decision.proposedTarget ?? undefined,
+          riskAmount: decision.proposedRisk ?? undefined,
+          openedAt: new Date(),
+          metadata: {
+            executionMode: 'PAPER',
             simulated: true,
+            engine: 'deterministic-paper-1',
+            noWalletSigning: true,
+            noOnchainTransaction: true,
           },
         },
-      },
+        include: { decision: true },
+      });
+
+      await tx.tradeDecision.update({
+        where: { id: decision.id },
+        data: {
+          status: 'EXECUTED',
+          reasoning: {
+            ...(decision.reasoning && typeof decision.reasoning === 'object' && !Array.isArray(decision.reasoning)
+              ? decision.reasoning
+              : {}),
+            paperExecution: {
+              engine: 'deterministic-paper-1',
+              entryPrice,
+              quantity,
+              simulated: true,
+            },
+          },
+        },
+      });
+
+      return trade;
     });
 
     return NextResponse.json({
-      trade,
+      trade: result,
       risk: riskResult,
       execution: {
         mode: 'PAPER',

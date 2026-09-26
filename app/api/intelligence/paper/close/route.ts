@@ -50,8 +50,13 @@ export async function POST(request: Request) {
       : (trade.entryPrice - exitPrice) * trade.quantity;
     const closedAt = new Date();
 
-    const updatedTrade = await prisma.trade.update({
-      where: { id: trade.id },
+    const updateResult = await prisma.trade.updateMany({
+      where: {
+        id: trade.id,
+        userId: session.user.id,
+        source: 'AGENT',
+        closedAt: null,
+      },
       data: {
         exitPrice,
         pnl,
@@ -68,6 +73,14 @@ export async function POST(request: Request) {
           },
         },
       },
+    });
+
+    if (updateResult.count !== 1) {
+      return NextResponse.json({ error: 'Paper trade was already closed.' }, { status: 409 });
+    }
+
+    const updatedTrade = await prisma.trade.findUnique({
+      where: { id: trade.id },
       include: { decision: true },
     });
 

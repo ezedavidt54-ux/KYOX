@@ -33,6 +33,7 @@ type LearningInput = {
     side: string;
     pnl: number | null;
     riskAmount: number | null;
+    closedAt: Date | null;
   }>;
 };
 
@@ -51,9 +52,16 @@ export function buildLearningMemory(input: LearningInput) {
     (x) => x.expectedAction && x.actualAction,
   );
   const matched = observationMatches.filter((x) => x.expectedAction === x.actualAction).length;
-  const wins = input.trades.filter((x) => (x.pnl ?? 0) > 0).length;
-  const losses = input.trades.filter((x) => (x.pnl ?? 0) < 0).length;
-  const totalPnl = input.trades.reduce((sum, x) => sum + (x.pnl ?? 0), 0);
+
+  // Only realized trades belong in outcome statistics. Open trades have no
+  // realized PnL yet and must not dilute win rate or learned performance.
+  const closedTrades = input.trades.filter(
+    (trade) => trade.closedAt !== null && trade.pnl !== null,
+  );
+  const openTrades = input.trades.length - closedTrades.length;
+  const wins = closedTrades.filter((x) => (x.pnl ?? 0) > 0).length;
+  const losses = closedTrades.filter((x) => (x.pnl ?? 0) < 0).length;
+  const totalPnl = closedTrades.reduce((sum, x) => sum + (x.pnl ?? 0), 0);
   const rated = input.feedback.filter((x) => x.rating !== null);
   const averageRating = rated.length
     ? Math.round((rated.reduce((sum, x) => sum + (x.rating ?? 0), 0) / rated.length) * 10) / 10
@@ -94,12 +102,13 @@ export function buildLearningMemory(input: LearningInput) {
       commonActions: topValues(input.decisions.map((x) => x.action)),
     },
     outcomePattern: {
-      trades: input.trades.length,
+      trades: closedTrades.length,
+      openTrades,
       wins,
       losses,
-      winRate: input.trades.length ? pct(wins, input.trades.length) : null,
+      winRate: closedTrades.length ? pct(wins, closedTrades.length) : null,
       totalPnl: Math.round(totalPnl * 100) / 100,
-      riskedTrades: input.trades.filter((x) => (x.riskAmount ?? 0) > 0).length,
+      riskedTrades: closedTrades.filter((x) => (x.riskAmount ?? 0) > 0).length,
     },
     feedbackPattern: {
       feedbackCount: input.feedback.length,

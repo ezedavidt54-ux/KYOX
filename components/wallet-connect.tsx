@@ -3,12 +3,21 @@
 import { useState } from 'react';
 import { Copy, ExternalLink, LogOut } from 'lucide-react';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
+import { siCoinbase, siMetamask, siPhantom, siTrustwallet } from 'simple-icons';
 import { useAccount, useBalance, useDisconnect, useSwitchChain } from 'wagmi';
 import { ROBINHOOD_CHAIN_ID } from '@/lib/robinhood';
 
 function shortAddress(address?: string) {
   if (!address) return '';
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
+
+function WalletBrandIcon({ path, hex }: { path: string; hex: string }) {
+  return (
+    <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true">
+      <path d={path} fill={`#${hex}`} />
+    </svg>
+  );
 }
 
 const WALLET_OPTION_COUNT = 14;
@@ -25,10 +34,10 @@ export function WalletConnect() {
     return (
       <button className="wallet-button" onClick={() => openConnectModal?.()} aria-label="Connect wallet">
         <span className="wallet-button-icons" aria-hidden="true">
-          <span className="wallet-button-icon wallet-brand-metamask">🦊</span>
-          <span className="wallet-button-icon wallet-brand-trust">◆</span>
-          <span className="wallet-button-icon wallet-brand-coinbase">▣</span>
-          <span className="wallet-button-icon wallet-brand-phantom">◈</span>
+          <span className="wallet-button-icon wallet-brand-metamask"><WalletBrandIcon path={siMetamask.path} hex={siMetamask.hex} /></span>
+          <span className="wallet-button-icon wallet-brand-trust"><WalletBrandIcon path={siTrustwallet.path} hex={siTrustwallet.hex} /></span>
+          <span className="wallet-button-icon wallet-brand-coinbase"><WalletBrandIcon path={siCoinbase.path} hex={siCoinbase.hex} /></span>
+          <span className="wallet-button-icon wallet-brand-phantom"><WalletBrandIcon path={siPhantom.path} hex={siPhantom.hex} /></span>
         </span>
         <span>CONNECT</span>
         <span className="wallet-button-count">{WALLET_OPTION_COUNT}</span>

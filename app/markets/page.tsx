@@ -1,5 +1,14 @@
 import { PageShell } from '@/components/page-shell';
+import { MarketsDashboard } from '@/components/markets-dashboard';
 
 export default function MarketsPage() {
-  return <PageShell kicker="KYOX / MARKETS" title="Markets" description="Explore available onchain markets and token pairs on Robinhood Chain."><div className="stats"><div className="stat"><span>NETWORK</span><strong>ROBINHOOD</strong></div><div className="stat"><span>CHAIN ID</span><strong>4663</strong></div><div className="stat"><span>STATUS</span><strong>LIVE</strong></div></div></PageShell>;
+  return (
+    <PageShell
+      kicker="KYOX / MARKETS"
+      title="Markets"
+      description="A live market intelligence surface for Robinhood Chain. Discover onchain liquidity, token pairs, Stock Tokens and execution infrastructure from one place."
+    >
+      <MarketsDashboard />
+    </PageShell>
+  );
 }

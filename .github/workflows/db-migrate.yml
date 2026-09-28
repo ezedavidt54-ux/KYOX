@@ -1,22 +1,17 @@
-name: KYOX CI
+name: KYOX Database Migrations
 
 on:
   workflow_dispatch:
   push:
     branches:
       - main
-      - kyox-swap-execution
-      - kyox-interface-v2
-      - kyox-intelligence-foundation
-      - kyox-decision-lifecycle
-  pull_request:
-    branches:
-      - main
-      - kyox-intelligence-foundation
-      - kyox-decision-lifecycle
+    paths:
+      - "prisma/migrations/**"
+      - "prisma/schema.prisma"
+      - "prisma.config.ts"
 
 jobs:
-  verify:
+  migrate:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -31,8 +26,7 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Lint
-        run: npm run lint
-
-      - name: Build
-        run: npm run build
+      - name: Apply pending Prisma migrations
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}

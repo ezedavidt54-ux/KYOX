@@ -53,6 +53,7 @@ export function WalletConnect() {
     return [...unique.values()];
   }, [connectors]);
 
+  const featuredWallets = wallets.slice(0, 4);
   const filteredWallets = wallets.filter((wallet) => wallet.name.toLowerCase().includes(search.trim().toLowerCase()));
 
   const openWalletSelector = useCallback(() => {
@@ -78,9 +79,20 @@ export function WalletConnect() {
   if (!isConnected || !address) {
     return (
       <>
-        <button className="wallet-button" onClick={openWalletSelector}>
-          <span className="wallet-orbit"><Wallet size={16} /></span>
-          CONNECT WALLET
+        <button className="wallet-button" onClick={openWalletSelector} aria-label="Connect wallet">
+          <span className="wallet-button-icons" aria-hidden="true">
+            {featuredWallets.map((connector) => {
+              const icon = walletIconUrl(connector.name) ?? connector.icon;
+              return (
+                <span className="wallet-button-icon" key={connector.uid}>
+                  {icon ? <img src={icon} alt="" /> : <Wallet size={13} />}
+                </span>
+              );
+            })}
+            {!featuredWallets.length && <span className="wallet-button-icon"><Wallet size={13} /></span>}
+          </span>
+          <span>CONNECT</span>
+          <span className="wallet-button-count">{wallets.length || '0'}</span>
         </button>
         {open && (
           <div className="wallet-modal-backdrop" onMouseDown={() => setOpen(false)}>

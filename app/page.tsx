@@ -7,8 +7,8 @@ import { MarketFeed } from '@/components/market-feed';
 
 const stages = [
   ['01', 'Observe', "KYOX watches how each trader analyses the market and makes decisions."],
-  ['02', 'Shadow', 'The personal intelligence proposes decisions without taking control.' ],
-  ['03', 'Paper', 'The intelligence tests its learned process against live market conditions.' ],
+  ['02', 'Shadow', 'The personal intelligence proposes decisions without taking control.'],
+  ['03', 'Paper', 'The intelligence tests its learned process against live market conditions.'],
   ['04', 'Autonomous', "Execution becomes possible only within the user's explicit limits."],
 ];
 
@@ -35,7 +35,7 @@ export default function Home() {
         <div className="kx-navright">
           <span className="kx-network">ROBINHOOD CHAIN</span>
           <WalletConnect />
-          <button className="kx-menu" type="button" aria-label="Open menu"><Menu size={17} /></button>
+          <Link href="/intelligence" className="kx-menu" aria-label="Open KYOX intelligence"><Menu size={17} /></Link>
         </div>
       </header>
 

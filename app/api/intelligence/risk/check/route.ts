@@ -25,6 +25,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'asset and action are required.' }, { status: 400 });
   }
 
+  const action = body.action.toUpperCase();
+  const validActions = new Set(['BUY', 'SELL', 'HOLD', 'WAIT', 'REJECT']);
+  if (!validActions.has(action)) {
+    return NextResponse.json({ error: 'Invalid decision action.' }, { status: 400 });
+  }
+
   const agent = body.agentId
     ? await prisma.tradingAgent.findFirst({ where: { id: body.agentId, userId: session.user.id } })
     : await prisma.tradingAgent.findFirst({ where: { userId: session.user.id }, orderBy: { createdAt: 'asc' } });
@@ -52,7 +58,7 @@ export async function POST(request: Request) {
   const result = checkDecisionRisk({
     mode: agent.mode,
     enabled: agent.enabled,
-    action: body.action,
+    action: action as 'BUY' | 'SELL' | 'HOLD' | 'WAIT' | 'REJECT',
     asset: body.asset,
     confidence: Number(body.confidence),
     confidenceFloor: agent.confidenceFloor,

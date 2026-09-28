@@ -35,8 +35,15 @@ export async function POST(request: Request) {
     if (decision.agent.mode !== 'PAPER') {
       return NextResponse.json({ error: 'Paper execution requires PAPER agent mode.' }, { status: 409 });
     }
-    if (decision.status !== 'PROPOSED') {
-      return NextResponse.json({ error: 'Only proposed decisions can enter paper execution.' }, { status: 409 });
+    if (decision.status !== 'APPROVED') {
+      return NextResponse.json({ error: 'Only approved decisions can enter paper execution.' }, { status: 409 });
+    }
+    if (decision.expiresAt && decision.expiresAt <= new Date()) {
+      await prisma.tradeDecision.update({
+        where: { id: decision.id },
+        data: { status: 'EXPIRED' },
+      });
+      return NextResponse.json({ error: 'Decision has expired.' }, { status: 409 });
     }
 
     const startOfDay = new Date();
@@ -95,6 +102,21 @@ export async function POST(request: Request) {
     }
 
     const result = await prisma.$transaction(async (tx) => {
+      const claimed = await tx.tradeDecision.updateMany({
+        where: {
+          id: decision.id,
+          userId: session.user.id,
+          status: 'APPROVED',
+        },
+        data: {
+          status: 'EXECUTED',
+        },
+      });
+
+      if (claimed.count !== 1) {
+        throw new Error('Decision is no longer approved for paper execution.');
+      }
+
       const trade = await tx.trade.create({
         data: {
           userId: session.user.id,

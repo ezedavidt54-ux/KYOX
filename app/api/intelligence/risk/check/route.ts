@@ -78,7 +78,7 @@ export async function POST(request: Request) {
         userId: session.user.id,
         agentId: agent.id,
         mode: agent.mode,
-        action: body.action,
+        action: action as 'BUY' | 'SELL' | 'HOLD' | 'WAIT' | 'REJECT',
         asset: body.asset.trim().toUpperCase(),
         protocol: typeof body.protocol === 'string' ? body.protocol : undefined,
         confidence: Number.isFinite(Number(body.confidence)) ? Number(body.confidence) : undefined,

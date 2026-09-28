@@ -7,9 +7,13 @@ on:
       - main
       - kyox-swap-execution
       - kyox-interface-v2
+      - kyox-intelligence-foundation
+      - kyox-decision-lifecycle
   pull_request:
     branches:
       - main
+      - kyox-intelligence-foundation
+      - kyox-decision-lifecycle
 
 jobs:
   verify:

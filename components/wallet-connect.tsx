@@ -34,6 +34,22 @@ function walletIconUrl(name: string) {
   return match ? `https://cdn.simpleicons.org/${match[1]}` : undefined;
 }
 
+const preferredWallets = [
+  'MetaMask',
+  'Trust Wallet',
+  'Coinbase Wallet',
+  'Phantom',
+  'OKX Wallet',
+  'Rabby Wallet',
+  'Rainbow',
+  'Binance Wallet',
+  'Bitget Wallet',
+  'Bybit Wallet',
+  'Uniswap Wallet',
+  'Zerion',
+  'WalletConnect',
+];
+
 export function WalletConnect() {
   const { address, isConnected, chain } = useAccount();
   const { data: balance } = useBalance({ address });
@@ -53,8 +69,18 @@ export function WalletConnect() {
     return [...unique.values()];
   }, [connectors]);
 
-  const featuredWallets = wallets.slice(0, 4);
-  const filteredWallets = wallets.filter((wallet) => wallet.name.toLowerCase().includes(search.trim().toLowerCase()));
+  const featuredWallets = useMemo(() => {
+    const byName = new Map(wallets.map((wallet) => [wallet.name.toLowerCase(), wallet]));
+    return preferredWallets
+      .map((name) => byName.get(name.toLowerCase()))
+      .filter((wallet): wallet is (typeof connectors)[number] => Boolean(wallet));
+  }, [connectors, wallets]);
+
+  const filteredWallets = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return featuredWallets;
+    return wallets.filter((wallet) => wallet.name.toLowerCase().includes(query));
+  }, [featuredWallets, search, wallets]);
 
   const openWalletSelector = useCallback(() => {
     setSearch('');
@@ -81,7 +107,7 @@ export function WalletConnect() {
       <>
         <button className="wallet-button" onClick={openWalletSelector} aria-label="Connect wallet">
           <span className="wallet-button-icons" aria-hidden="true">
-            {featuredWallets.map((connector) => {
+            {featuredWallets.slice(0, 4).map((connector) => {
               const icon = walletIconUrl(connector.name) ?? connector.icon;
               return (
                 <span className="wallet-button-icon" key={connector.uid}>
@@ -92,7 +118,7 @@ export function WalletConnect() {
             {!featuredWallets.length && <span className="wallet-button-icon"><Wallet size={13} /></span>}
           </span>
           <span>CONNECT</span>
-          <span className="wallet-button-count">{wallets.length || '0'}</span>
+          <span className="wallet-button-count">{featuredWallets.length || wallets.length || '0'}</span>
         </button>
         {open && (
           <div className="wallet-modal-backdrop" onMouseDown={() => setOpen(false)}>
@@ -100,8 +126,8 @@ export function WalletConnect() {
               <div className="wallet-modal-head">
                 <div>
                   <span className="wallet-modal-kicker">KYOX ACCESS</span>
-                  <h2>CONNECT WALLET</h2>
-                  <p>Choose your preferred provider to proceed.</p>
+                  <h2>CONNECT YOUR WALLET</h2>
+                  <p>Select a real wallet provider to open its native connection flow.</p>
                 </div>
                 <button className="modal-close" aria-label="Close wallet selector" onClick={() => setOpen(false)}><X size={18} /></button>
               </div>
@@ -120,7 +146,7 @@ export function WalletConnect() {
                       </span>
                       <span className="wallet-option-copy">
                         <strong>{connector.name}</strong>
-                        <small>{connector.name === 'WalletConnect' ? 'Connect any compatible mobile wallet' : 'Secure non custodial connection'}</small>
+                        <small>{connector.name === 'WalletConnect' ? 'Open a compatible wallet' : 'Open this wallet connection'}</small>
                       </span>
                       <span className="wallet-option-arrow">↗</span>
                     </button>
@@ -128,7 +154,7 @@ export function WalletConnect() {
                 })}
                 {!filteredWallets.length && <div className="wallet-empty">No compatible wallet found.</div>}
               </div>
-              <div className="wallet-modal-foot"><span>SECURE CONNECTION</span><span>•</span><span>NON CUSTODIAL</span><span>•</span><span>{wallets.length} OPTIONS</span></div>
+              <div className="wallet-modal-foot"><span>REAL WALLET PROVIDERS</span><span>•</span><span>NON CUSTODIAL</span><span>•</span><span>{wallets.length} AVAILABLE</span></div>
             </div>
           </div>
         )}

@@ -193,7 +193,11 @@ export function MarketsDashboard() {
     }
   }, []);
 
+  // Data loading is intentionally initiated from effects because it synchronizes the dashboard with external market APIs.
+  // The loader updates multiple UI states asynchronously, so the set-state-in-effect rule is not applicable here.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { void loadMarkets(); }, [loadMarkets]);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { void loadStockTokens(); }, [loadStockTokens]);
   useEffect(() => {
     const timer = window.setInterval(() => { void loadMarkets(); }, 15_000);
@@ -340,7 +344,7 @@ export function MarketsDashboard() {
             </article>
           ))}
         </div>
-        <div className="data-note">Robinhood's official Stock Token API provides asset metadata, chain deployments and live bid/ask data. The price shown here is the midpoint of the current bid and ask when a quote is available. citeturn5view0</div>
+        <div className="data-note">Robinhood&apos;s official Stock Token API provides asset metadata, chain deployments and live bid/ask data. The price shown here is the midpoint of the current bid and ask when a quote is available. citeturn5view0</div>
       </section>
 
       <section className="venue-section">
@@ -349,9 +353,9 @@ export function MarketsDashboard() {
           <article className="venue"><div className="venue-top"><Layers3 size={15} /><span className="venue-badge">ONCHAIN</span></div><h3>Uniswap V2</h3><p>Current KYOX pool discovery and reserve reads. The canonical V2 factory and router are already wired into the trading surface.</p></article>
           <article className="venue"><div className="venue-top"><BarChart3 size={15} /><span className="venue-badge">DEPLOYED</span></div><h3>Uniswap V3 / V4</h3><p>Concentrated and singleton liquidity infrastructure is deployed on Robinhood Chain and should become the next depth source for KYOX routing.</p></article>
           <article className="venue"><div className="venue-top"><Activity size={15} /><span className="venue-badge">EXECUTION</span></div><h3>UniswapX</h3><p>Gasless order settlement infrastructure is deployed for Robinhood Chain. KYOX can surface it as an execution venue once quote and fill telemetry is indexed.</p></article>
-          <article className="venue"><div className="venue-top"><Droplets size={15} /><span className="venue-badge">ECOSYSTEM</span></div><h3>Rialto · Morpho · Perps</h3><p>Robinhood Chain's ecosystem also includes Rialto, Morpho, Lighter and Arcus. KYOX should expose these as separate market classes rather than mixing spot pools with derivatives or lending.</p></article>
+          <article className="venue"><div className="venue-top"><Droplets size={15} /><span className="venue-badge">ECOSYSTEM</span></div><h3>Rialto · Morpho · Perps</h3><p>Robinhood Chain&apos;s ecosystem also includes Rialto, Morpho, Lighter and Arcus. KYOX should expose these as separate market classes rather than mixing spot pools with derivatives or lending.</p></article>
         </div>
-        <div className="data-note">Official Robinhood documentation describes Uniswap as the public DEX, Rialto as a PropAMM / aggregator, Morpho as lending, and Lighter and Arcus as perpetuals infrastructure. citeturn1search3 Uniswap's deployment records confirm V4 PoolManager and other contracts on chain 4663. citeturn2search2</div>
+        <div className="data-note">Official Robinhood documentation describes Uniswap as the public DEX, Rialto as a PropAMM / aggregator, Morpho as lending, and Lighter and Arcus as perpetuals infrastructure. citeturn1search3 Uniswap&apos;s deployment records confirm V4 PoolManager and other contracts on chain 4663. citeturn2search2</div>
       </section>
     </div>
   );

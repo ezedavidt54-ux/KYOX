@@ -4,6 +4,7 @@ import { BlackHoleHeroSection } from '@/components/ui/blackhole-hero-section';
 import { WalletConnect } from '@/components/wallet-connect';
 import { SwapPanel } from '@/components/swap-panel';
 import { MarketFeed } from '@/components/market-feed';
+import { HeroLiveData } from '@/components/hero-live-data';
 
 const stages = [
   ['01', 'Observe', "KYOX watches how each trader analyses the market and makes decisions."],
@@ -50,6 +51,7 @@ export default function Home() {
             <Link href="#terminal" className="kx-secondary">Explore KYOX <ArrowDown size={14} /></Link>
           </div>
         </div>
+        <HeroLiveData />
         <div className="kx-hero-meta">
           <div className="kx-meta-item"><span>PHASE</span><strong>03 / INTELLIGENCE</strong></div>
           <div className="kx-meta-item"><span>MODE</span><strong>LEARNING</strong></div>
